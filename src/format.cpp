@@ -1,7 +1,2 @@
-#include "../include/format.h"
+#include "format.hpp"
 
-#include <iostream>
-
-void hello() {
-	std::cout << "Hello, World!" << std::endl;
-}
