@@ -1,12 +1,10 @@
 #include "format.hpp"
 
 #include <leveldb/env.h>
-#include <leveldb/options.h>
 #include <leveldb/filter_policy.h>
 #include <leveldb/cache.h>
 #include <leveldb/zlib_compressor.h>
 #include <leveldb/decompress_allocator.h>
-#include <leveldb/db.h>
 
 class EmptyLogger : public leveldb::Logger {
 	public:
@@ -14,6 +12,8 @@ class EmptyLogger : public leveldb::Logger {
 };
 
 namespace Pathfinders::Bedrock {
+	leveldb::ReadOptions World::ReadOptions = leveldb::ReadOptions();
+
 	World::World(const char *path, size_t lruCacheCapacity, size_t writeBufferSize) {
 		leveldb::Options options;
 		options.filter_policy = leveldb::NewBloomFilterPolicy(10);
@@ -23,13 +23,17 @@ namespace Pathfinders::Bedrock {
 		options.compressors[0] = new leveldb::ZlibCompressorRaw(-1);
 		options.compressors[1] = new leveldb::ZlibCompressor();
 
-		leveldb::ReadOptions readOptions;
-		readOptions.decompress_allocator = new leveldb::DecompressAllocator();
+		if(ReadOptions.decompress_allocator == nullptr)
+			ReadOptions.decompress_allocator = new leveldb::DecompressAllocator();
 
 		assert(leveldb::DB::Open(options, path, &mDatabase).ok());
 	}
 
 	World::~World() {
 		delete mDatabase;
+	}
+
+	Subchunk& World::GetSubchunk(const SubchunkPosition &position) {
+		
 	}
 }

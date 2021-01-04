@@ -1,9 +1,14 @@
 #ifndef BEDROCK_FORMAT_FORMAT_HPP
 #define BEDROCK_FORMAT_FORMAT_HPP
 
-namespace leveldb {
-	class DB;
-}
+#include "subchunk.hpp"
+#include "format.hpp"
+#include "position.hpp"
+
+#include <leveldb/db.h>
+#include <leveldb/options.h>
+
+#include <map>
 
 namespace Pathfinders::Bedrock {
 	class World {
@@ -13,8 +18,13 @@ namespace Pathfinders::Bedrock {
 			);
 			~World();
 
+			static leveldb::ReadOptions ReadOptions;
+
+			Subchunk& GetSubchunk(const SubchunkPosition& position);
+
 		private:
 			leveldb::DB* mDatabase = nullptr;
+			std::map<SubchunkPosition, Subchunk> mSubchunks;
 	};
 }
 

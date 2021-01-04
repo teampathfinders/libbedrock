@@ -6,7 +6,11 @@
 #ifndef BEDROCK_FORMAT_SUBCHUNK_HPP
 #define BEDROCK_FORMAT_SUBCHUNK_HPP
 
-#include "dimension.hpp"
+#include "position.hpp"
+#include "bitstream.hpp"
+
+#include <string>
+#include <vector>
 
 namespace leveldb {
 	class DB;
@@ -15,11 +19,22 @@ namespace leveldb {
 namespace Pathfinders::Bedrock {
 	class Subchunk {
 		public:
-			Subchunk(leveldb::DB* database, int x, int y, int z, Dimension dimension = Dimension::Overworld);
+			Subchunk(leveldb::DB* database, const SubchunkPosition& position);
 			~Subchunk();
 
+			void Decode();
+			void Encode();
+
 		private:
+			struct BlockStorage {
+
+			};
+
+			void DecodeBlockStorage(BitStream& stream, char i);
+
 			leveldb::DB* mDatabase;
+			std::string mRawData;
+			std::vector<BlockStorage> blockStorage;
 	};
 }
 

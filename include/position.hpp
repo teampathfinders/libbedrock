@@ -3,8 +3,8 @@
 // Copyright (c) 2021 Pathfinders. All rights reserved
 //
 
-#ifndef BEDROCK_FORMAT_DIMENSION_HPP
-#define BEDROCK_FORMAT_DIMENSION_HPP
+#ifndef BEDROCK_FORMAT_POSITION_HPP
+#define BEDROCK_FORMAT_POSITION_HPP
 
 namespace Pathfinders::Bedrock {
 	enum class Dimension {
@@ -12,6 +12,12 @@ namespace Pathfinders::Bedrock {
 		Nether,
 		End
 	};
+
+	struct SubchunkPosition {
+		int x, z;
+		char y;
+		Dimension dimension;
+	};
 }
 
-#endif // BEDROCK_FORMAT_DIMENSION_HPP
+#endif // BEDROCK_FORMAT_POSITION_HPP

@@ -1,9 +1,6 @@
 [submodule "libraries/leveldb"]
 	path = libraries/leveldb
 	url = https://github.com/MCPathfinders/leveldb-mcpe.git
-[submodule "libraries/bitstream"]
-	path = libraries/bitstream
-	url = https://github.com/MCPathfinders/bitstream.git
 [submodule "libraries/nbt"]
 	path = libraries/nbt
 	url = https://github.com/MCPathfinders/nbt.git
