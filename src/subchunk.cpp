@@ -6,6 +6,11 @@
 #include "subchunk.hpp"
 #include "key.hpp"
 #include "format.hpp"
+#include "bitstream.hpp"
+
+#include <leveldb/db.h>
+#include <leveldb/status.h>
+#include <leveldb/slice.h>
 
 #include <sstream>
 #include <stdexcept>
@@ -29,6 +34,7 @@ namespace Pathfinders::Bedrock {
 		char version = stream.ReadByte();
 		char storageCount = version == 1 ? (char)0x01 : stream.ReadByte();
 
+
 		for(char i = 0; i < storageCount; i++) {
 			DecodeBlockStorage(stream, i);
 		}
@@ -41,6 +47,8 @@ namespace Pathfinders::Bedrock {
 		size_t indiceSize = ceil(4096 / blocksPerWord);
 
 		stream.Advance(indiceSize);
+
+		int paletteSize = stream.ReadLittleInt();
 	}
 
 	void Subchunk::Encode() {

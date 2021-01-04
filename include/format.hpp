@@ -5,10 +5,12 @@
 #include "format.hpp"
 #include "position.hpp"
 
-#include <leveldb/db.h>
-#include <leveldb/options.h>
-
 #include <map>
+
+namespace leveldb {
+	class DB;
+	class ReadOptions;
+}
 
 namespace Pathfinders::Bedrock {
 	class World {

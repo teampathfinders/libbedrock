@@ -7,13 +7,16 @@
 #define BEDROCK_FORMAT_SUBCHUNK_HPP
 
 #include "position.hpp"
-#include "bitstream.hpp"
 
 #include <string>
 #include <vector>
 
 namespace leveldb {
 	class DB;
+}
+
+namespace Pathfinders {
+	class BitStream;
 }
 
 namespace Pathfinders::Bedrock {
@@ -34,7 +37,7 @@ namespace Pathfinders::Bedrock {
 
 			leveldb::DB* mDatabase;
 			std::string mRawData;
-			std::vector<BlockStorage> blockStorage;
+			std::vector<BlockStorage> mStorageRecords;
 	};
 }
 

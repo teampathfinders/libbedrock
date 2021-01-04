@@ -17,6 +17,10 @@ namespace Pathfinders::Bedrock {
 		int x, z;
 		char y;
 		Dimension dimension;
+
+		bool operator<(const SubchunkPosition& p) const {
+			return false;
+		}
 	};
 }
 

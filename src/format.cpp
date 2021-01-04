@@ -1,6 +1,8 @@
 #include "format.hpp"
 
 #include <leveldb/env.h>
+#include <leveldb/options.h>
+#include <leveldb/db.h>
 #include <leveldb/filter_policy.h>
 #include <leveldb/cache.h>
 #include <leveldb/zlib_compressor.h>
@@ -34,6 +36,6 @@ namespace Pathfinders::Bedrock {
 	}
 
 	Subchunk& World::GetSubchunk(const SubchunkPosition &position) {
-		
+		return mSubchunks.at(position);
 	}
 }
