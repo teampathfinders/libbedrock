@@ -8,7 +8,7 @@ add_subdirectory(leveldb)
 add_library(
         bedrock_format
         src/format.cpp
-)
+        src/subchunk.cpp)
 
 target_include_directories(
         bedrock_format PRIVATE
