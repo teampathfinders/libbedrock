@@ -1,0 +1,6 @@
+#ifndef BEDROCK_FORMAT_FORMAT_H
+#define BEDROCK_FORMAT_FORMAT_H
+
+void hello();
+
+#endif //BEDROCK_FORMAT_FORMAT_H
