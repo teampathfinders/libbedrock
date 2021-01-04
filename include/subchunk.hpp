@@ -7,6 +7,7 @@
 #define BEDROCK_FORMAT_SUBCHUNK_HPP
 
 #include "position.hpp"
+#include "bitstream.hpp"
 
 #include <string>
 #include <vector>
@@ -15,13 +16,11 @@ namespace leveldb {
 	class DB;
 }
 
-namespace Pathfinders {
-	class BitStream;
-}
-
 namespace Pathfinders::Bedrock {
 	class Subchunk {
 		public:
+			Subchunk() = default;
+			explicit Subchunk(leveldb::DB* database);
 			Subchunk(leveldb::DB* database, const SubchunkPosition& position);
 			~Subchunk();
 
@@ -30,14 +29,20 @@ namespace Pathfinders::Bedrock {
 
 		private:
 			struct BlockStorage {
-
+				char version;
+				char blocksPerWord;
+				unsigned int indiceSize;
+				unsigned int paletteSize;
 			};
 
 			void DecodeBlockStorage(BitStream& stream, char i);
 
-			leveldb::DB* mDatabase;
-			std::string mRawData;
-			std::vector<BlockStorage> mStorageRecords;
+			leveldb::DB* m_database;
+			std::string m_rawData;
+
+			// Subchunk data
+			char m_version;
+			std::vector<BlockStorage> m_storageRecords;
 	};
 }
 

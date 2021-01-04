@@ -11,11 +11,11 @@
 namespace Pathfinders::Bedrock {
 	class NBT {
 	public:
-		explicit NBT(Pathfinders::BitStream& buffer) noexcept;
+		explicit NBT(BitStream& buffer) noexcept;
 		~NBT() noexcept = default;
 
 	private:
-		Pathfinders::BitStream& m_buffer;
+		BitStream& m_buffer;
 	};
 }
 

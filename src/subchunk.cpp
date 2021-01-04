@@ -6,34 +6,36 @@
 #include "subchunk.hpp"
 #include "key.hpp"
 #include "format.hpp"
-#include "bitstream.hpp"
 
 #include <leveldb/db.h>
-#include <leveldb/status.h>
-#include <leveldb/slice.h>
 
 #include <sstream>
 #include <stdexcept>
 
 namespace Pathfinders::Bedrock {
-	Subchunk::Subchunk(leveldb::DB* database, const SubchunkPosition& position) : mDatabase(database) {
+	// Create a new empty subchunk to encode
+	Subchunk::Subchunk(leveldb::DB* database) : m_database(database) {}
+
+	// Create a new decoded subchunk
+	Subchunk::Subchunk(leveldb::DB* database, const SubchunkPosition& position) : m_database(database) {
 		leveldb::Slice key = leveldb::Slice(GenerateSubchunkKey(position));
-		leveldb::Status status = mDatabase->Get(World::ReadOptions, key, &mRawData);
+		leveldb::Status status = m_database->Get(World::ReadOptions, key, &m_rawData);
 		if(!status.ok()) {
 			std::ostringstream ss;
 			ss << "Failed to load subchunk data: " << status.ToString();
 
 			throw std::runtime_error(ss.str());
 		}
+
+		Decode();
 	}
 
-	void Subchunk::Decode() {
-		BitStream stream = BitStream(mRawData.data(), mRawData.size());
+	inline void Subchunk::Decode() {
+		BitStream stream = BitStream(m_rawData.data(), m_rawData.size());
 
 		// TODO: Add support for version 1
-		char version = stream.ReadByte();
-		char storageCount = version == 1 ? (char)0x01 : stream.ReadByte();
-
+		m_version = stream.ReadByte();
+		char storageCount = m_version == 1 ? (char)0x01 : stream.ReadByte();
 
 		for(char i = 0; i < storageCount; i++) {
 			DecodeBlockStorage(stream, i);
@@ -48,7 +50,9 @@ namespace Pathfinders::Bedrock {
 
 		stream.Advance(indiceSize);
 
-		int paletteSize = stream.ReadLittleInt();
+		auto paletteSize = (unsigned int)stream.ReadLittleInt();
+
+		m_storageRecords.push_back({ version, blocksPerWord, indiceSize, paletteSize });
 	}
 
 	void Subchunk::Encode() {

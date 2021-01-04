@@ -28,14 +28,14 @@ namespace Pathfinders::Bedrock {
 		if(ReadOptions.decompress_allocator == nullptr)
 			ReadOptions.decompress_allocator = new leveldb::DecompressAllocator();
 
-		assert(leveldb::DB::Open(options, path, &mDatabase).ok());
+		assert(leveldb::DB::Open(options, path, &m_database).ok());
 	}
 
 	World::~World() {
-		delete mDatabase;
+		delete m_database;
 	}
 
 	Subchunk& World::GetSubchunk(const SubchunkPosition &position) {
-		return mSubchunks.at(position);
+		return m_subchunks[position];
 	}
 }

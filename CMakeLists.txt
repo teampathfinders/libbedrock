@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(BEDROCK_FORMAT_ENABLE_TESTING TRUE)
 
 add_subdirectory(libraries/leveldb)
-add_subdirectory(libraries/bitstream)
 add_library(
         bedrock_format
         src/format.cpp
@@ -19,12 +18,10 @@ target_include_directories(
         bedrock_format PRIVATE
         include
         libraries/leveldb/Projects/leveldb-mcpe/include
-        libraries/bitstream
 )
 target_link_libraries(
         bedrock_format PRIVATE
         LevelDB-MCPE
-        bitstream
 )
 
 if(BEDROCK_FORMAT_ENABLE_TESTING)

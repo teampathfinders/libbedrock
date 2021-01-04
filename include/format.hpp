@@ -5,7 +5,7 @@
 #include "format.hpp"
 #include "position.hpp"
 
-#include <map>
+#include <unordered_map>
 
 namespace leveldb {
 	class DB;
@@ -25,8 +25,8 @@ namespace Pathfinders::Bedrock {
 			Subchunk& GetSubchunk(const SubchunkPosition& position);
 
 		private:
-			leveldb::DB* mDatabase = nullptr;
-			std::map<SubchunkPosition, Subchunk> mSubchunks;
+			leveldb::DB* m_database = nullptr;
+			std::unordered_map<SubchunkPosition, Subchunk> m_subchunks;
 	};
 }
 

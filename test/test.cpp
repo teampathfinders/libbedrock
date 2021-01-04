@@ -4,6 +4,7 @@
 //
 
 #include "format.hpp"
+#include "subchunk.hpp"
 
 #include <windows.h>
 #include <shlobj.h>
@@ -36,6 +37,8 @@ int main() {
 	std::string path = GetFirstSave();
 	std::cout << path << std::endl;
 	auto world = new Pathfinders::Bedrock::World(path.c_str());
+
+	auto subchunk = world->GetSubchunk(Pathfinders::Bedrock::SubchunkPosition(0, 0, 0));
 
 	delete world;
 	return 0;
