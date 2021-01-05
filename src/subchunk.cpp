@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <iostream>
 
 namespace Pathfinders::Bedrock {
 	// Create a new empty subchunk to encode
@@ -19,7 +20,15 @@ namespace Pathfinders::Bedrock {
 	// Create a new decoded subchunk
 	Subchunk::Subchunk(leveldb::DB* database, const SubchunkPosition& position) : m_database(database) {
 		leveldb::Slice key = leveldb::Slice(GenerateSubchunkKey(position));
-		leveldb::Status status = m_database->Get(World::ReadOptions, key, &m_rawData);
+
+		for(char c : key.ToString()) {
+			std::cout << (int)c;
+		}
+		std::cout << std::endl;
+
+		std::string data;
+		leveldb::Status status = m_database->Get(World::ReadOptions, key, &data);
+
 		if(!status.ok()) {
 			std::ostringstream ss;
 			ss << "Failed to load subchunk data: " << status.ToString();
@@ -27,36 +36,40 @@ namespace Pathfinders::Bedrock {
 			throw std::runtime_error(ss.str());
 		}
 
+		m_rawData = BitStream(data);
 		Decode();
 	}
 
 	inline void Subchunk::Decode() {
-		BitStream stream = BitStream(m_rawData.data(), m_rawData.size());
-
-		// TODO: Add support for version 1
-		m_version = stream.ReadByte();
-		char storageCount = m_version == 1 ? (char)0x01 : stream.ReadByte();
+		m_version = m_rawData.ReadByte();
+		char storageCount = m_version == 1 ? (char)1 : m_rawData.ReadByte();
 
 		for(char i = 0; i < storageCount; i++) {
-			DecodeBlockStorage(stream, i);
+			DecodeBlockStorage(i);
 		}
 	}
 
-	void Subchunk::DecodeBlockStorage(BitStream& stream, char i) {
-		char version = stream.ReadByte();
+	void Subchunk::DecodeBlockStorage(char i) {
+		char version = m_rawData.ReadByte();
 		char bitsPerBlock = version >> 1;
 		char blocksPerWord = (char)floor(32 / bitsPerBlock);
 		size_t indiceSize = ceil(4096 / blocksPerWord);
 
-		stream.Advance(indiceSize);
+		m_rawData.Advance(indiceSize);
 
-		auto paletteSize = (unsigned int)stream.ReadLittleInt();
+		auto paletteSize = (unsigned int)m_rawData.ReadLittleInt();
 
 		m_storageRecords.push_back({ version, blocksPerWord, indiceSize, paletteSize });
 	}
 
 	void Subchunk::Encode() {
 
+	}
+
+	void Subchunk::Test() {
+		std::cout << m_rawData.GetBuffer().size() << std::endl;
+		std::cout << "Version: " << m_version << std::endl;
+		std::cout << "Storage records: " << m_storageRecords.size() << std::endl;
 	}
 
 	Subchunk::~Subchunk() = default;

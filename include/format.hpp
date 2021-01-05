@@ -5,7 +5,11 @@
 #include "format.hpp"
 #include "position.hpp"
 
-#include <unordered_map>
+#include <map>
+
+typedef std::map<int, std::map<char, std::map<int, Pathfinders::Bedrock::Subchunk>>> SubchunkListXYZ;
+typedef std::map<char, std::map<int, Pathfinders::Bedrock::Subchunk>> SubchunkListYZ;
+typedef std::map<int, Pathfinders::Bedrock::Subchunk> SubchunkListZ;
 
 namespace leveldb {
 	class DB;
@@ -22,11 +26,11 @@ namespace Pathfinders::Bedrock {
 
 			static leveldb::ReadOptions ReadOptions;
 
-			Subchunk& GetSubchunk(const SubchunkPosition& position);
+			Subchunk* GetSubchunk(const SubchunkPosition& position);
 
 		private:
 			leveldb::DB* m_database = nullptr;
-			std::unordered_map<SubchunkPosition, Subchunk> m_subchunks;
+			SubchunkListXYZ m_subchunks;
 	};
 }
 

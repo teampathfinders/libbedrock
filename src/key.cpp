@@ -17,6 +17,7 @@ namespace Pathfinders::Bedrock {
 			stream.WriteLittleInt(static_cast<int>(position.dimension)); // Dimension
 
 		stream.WriteByte(0x2F); // Record type (SubchunkPrefix)
+		stream.WriteByte(position.y == 0 ? 0 : (char)floor(256 / (double)position.y));
 
 		const auto& buffer = stream.GetBuffer();
 		return std::string(buffer.begin(), buffer.end());

@@ -7,12 +7,14 @@
 #define BEDROCK_FORMAT_BITSTREAM_HPP
 
 #include <vector>
+#include <string>
 
 namespace Pathfinders::Bedrock {
 	class BitStream {
 		public:
 			explicit BitStream(size_t preallocated = 0) noexcept;
 			explicit BitStream(const char* data, size_t length) noexcept;
+			explicit BitStream(const std::string& data) noexcept;
 			~BitStream() noexcept = default;
 
 			// -- Writing --

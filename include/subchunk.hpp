@@ -27,6 +27,8 @@ namespace Pathfinders::Bedrock {
 			void Decode();
 			void Encode();
 
+			void Test();
+
 		private:
 			struct BlockStorage {
 				char version;
@@ -35,10 +37,10 @@ namespace Pathfinders::Bedrock {
 				unsigned int paletteSize;
 			};
 
-			void DecodeBlockStorage(BitStream& stream, char i);
+			void DecodeBlockStorage(char i);
 
 			leveldb::DB* m_database;
-			std::string m_rawData;
+			BitStream m_rawData;
 
 			// Subchunk data
 			char m_version;

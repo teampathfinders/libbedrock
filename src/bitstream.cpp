@@ -15,6 +15,10 @@ namespace Pathfinders::Bedrock {
 		m_buffer = std::vector<char>(data, data + length);
 	}
 
+	BitStream::BitStream(const std::string& data) noexcept : m_position(0) {
+		m_buffer = std::vector<char>(data.begin(), data.end());
+	}
+
 	const std::vector<char>& BitStream::GetBuffer() const noexcept {
 		return m_buffer;
 	}
