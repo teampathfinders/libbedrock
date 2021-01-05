@@ -6,6 +6,7 @@
 #include "subchunk.hpp"
 #include "key.hpp"
 #include "format.hpp"
+#include "nbt.hpp"
 
 #include <leveldb/db.h>
 
@@ -42,24 +43,34 @@ namespace Pathfinders::Bedrock {
 
 	inline void Subchunk::Decode() {
 		m_version = m_rawData.ReadByte();
-		char storageCount = m_version == 1 ? (char)1 : m_rawData.ReadByte();
+		unsigned char storageCount = m_version == 1 ? (char)1 : m_rawData.ReadByte();
 
-		for(char i = 0; i < storageCount; i++) {
+		for(unsigned char i = 0; i < storageCount; i++) {
 			DecodeBlockStorage(i);
 		}
 	}
 
 	void Subchunk::DecodeBlockStorage(char i) {
-		char version = m_rawData.ReadByte();
-		char bitsPerBlock = version >> 1;
-		char blocksPerWord = (char)floor(32 / bitsPerBlock);
-		size_t indiceSize = ceil(4096 / blocksPerWord);
+		unsigned char version = m_rawData.ReadByte();
+		unsigned char bitsPerBlock = version >> 1;
+		unsigned char blocksPerWord = floor(32 / bitsPerBlock);
 
-		m_rawData.Advance(indiceSize);
+		unsigned int blockStatesSize = ceil(4096 / blocksPerWord);
+		m_rawData.Advance(blockStatesSize);
 
-		auto paletteSize = (unsigned int)m_rawData.ReadLittleInt();
+		BlockStorage block = {};
+		block.version = version;
 
-		m_storageRecords.push_back({ version, blocksPerWord, indiceSize, paletteSize });
+		DecodePalette(&block);
+
+		m_storageRecords.push_back(block);
+	}
+
+	void Subchunk::DecodePalette(BlockStorage* block) {
+		NBT decoder = NBT(m_rawData);
+		std::vector<PaletteEntry> palette = decoder.decodePalette();
+
+		block->palette = palette;
 	}
 
 	void Subchunk::Encode() {

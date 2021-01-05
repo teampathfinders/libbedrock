@@ -19,6 +19,10 @@ namespace leveldb {
 namespace Pathfinders::Bedrock {
 	class Subchunk {
 		public:
+			struct PaletteEntry {
+
+			};
+
 			Subchunk() = default;
 			explicit Subchunk(leveldb::DB* database);
 			Subchunk(leveldb::DB* database, const SubchunkPosition& position);
@@ -31,13 +35,12 @@ namespace Pathfinders::Bedrock {
 
 		private:
 			struct BlockStorage {
-				char version;
-				char blocksPerWord;
-				unsigned int indiceSize;
-				unsigned int paletteSize;
+				unsigned char version;
+				std::vector<PaletteEntry> palette;
 			};
 
 			void DecodeBlockStorage(char i);
+			void DecodePalette(BlockStorage* block);
 
 			leveldb::DB* m_database;
 			BitStream m_rawData;
