@@ -3,8 +3,7 @@
 // Copyright (c) 2021 Pathfinders. All rights reserved
 //
 
-#include "format.hpp"
-#include "subchunk.hpp"
+#include "format.h"
 
 #include <windows.h>
 #include <shlobj.h>
@@ -36,11 +35,16 @@ std::string GetFirstSave() {
 int main() {
 	std::string path = GetFirstSave();
 	std::cout << path << std::endl;
-	auto world = new Pathfinders::Bedrock::World(path.c_str());
 
-	auto subchunk = world->GetSubchunk(Pathfinders::Bedrock::SubchunkPosition(0, 0, 0));
-	subchunk->Test();
+	PFBWorld* world;
+	PFBResult result = PFBOpenWorld(path.c_str(), &world);
+	if(PFB_FAILED(result)) {
+	    return 1;
+	}
 
-	delete world;
+	result = PFBCloseWorld(world);
+	if(PFB_FAILED(result)) {
+	    return 1;
+	}
 	return 0;
 }
