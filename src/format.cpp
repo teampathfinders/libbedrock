@@ -16,12 +16,17 @@
 
 #include "format.h"
 
+#include <iostream>
+
 #include <leveldb/env.h>
 #include <leveldb/options.h>
 #include <leveldb/filter_policy.h>
 #include <leveldb/cache.h>
 #include <leveldb/zlib_compressor.h>
 #include <leveldb/db.h>
+#include <leveldb/decompress_allocator.h>
+
+static leveldb::ReadOptions readOptions;
 
 class EmptyLogger : public leveldb::Logger {
 public:
@@ -29,8 +34,12 @@ public:
 };
 
 PFBResult PFBOpenWorld(const char* path, PFBWorld** ppWorld) {
+    if(readOptions.decompress_allocator == nullptr) {
+        readOptions.decompress_allocator = new leveldb::DecompressAllocator();
+    }
+
     *ppWorld = new PFBWorld();
-    auto pWorld = *ppWorld;
+    PFBWorld* pWorld = *ppWorld;
 
     leveldb::Options options;
     options.filter_policy = leveldb::NewBloomFilterPolicy(10);
@@ -40,8 +49,9 @@ PFBResult PFBOpenWorld(const char* path, PFBWorld** ppWorld) {
     options.compressors[0] = new leveldb::ZlibCompressorRaw(-1);
     options.compressors[1] = new leveldb::ZlibCompressor();
 
-    leveldb::Status status = leveldb::DB::Open(options, path, (leveldb::DB**)&pWorld->database);
+    leveldb::Status status = leveldb::DB::Open(options, path, (leveldb::DB**)&pWorld->db);
     if(!status.ok()) {
+        std::cerr << "Failed to open database with error: " << status.ToString() << std::endl;
         return PFB_DATABASE_OPEN_ERROR;
     }
 
@@ -49,8 +59,26 @@ PFBResult PFBOpenWorld(const char* path, PFBWorld** ppWorld) {
 }
 
 PFBResult PFBCloseWorld(PFBWorld* pWorld) {
-    delete (leveldb::DB*)pWorld->database;
+    delete (leveldb::DB*)pWorld->db;
     delete pWorld;
+
+    return PFB_SUCCESS;
+}
+
+PFBResult PFBLoadEntry(PFBWorld* pWorld, const char* key, unsigned int keyLen, char** pBuffer, unsigned int* pBufferLen) {
+    leveldb::Slice slice = leveldb::Slice(key, keyLen);
+    std::string cppValue;
+
+    leveldb::Status status = ((leveldb::DB*)pWorld->db)->Get(readOptions, slice, &cppValue);
+    if(!status.ok()) {
+        std::cerr << "Failed to read database entry with error: " << status.ToString() << std::endl;
+        return PFB_DATABASE_READ_ERROR;
+    }
+
+    *pBufferLen = cppValue.length();
+    *pBuffer = new char[cppValue.length()];
+
+    memcpy(*pBuffer, cppValue.data(), cppValue.length());
 
     return PFB_SUCCESS;
 }

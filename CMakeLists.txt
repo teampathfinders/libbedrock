@@ -9,6 +9,8 @@ add_library(
         BedrockFormat
         include/format.h
         src/format.cpp
+        include/chunk.h
+        src/chunk.c
 )
 
 target_include_directories(

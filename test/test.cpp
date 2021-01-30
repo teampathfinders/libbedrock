@@ -4,6 +4,7 @@
 //
 
 #include "format.h"
+#include "chunk.h"
 
 #include <windows.h>
 #include <shlobj.h>
@@ -38,6 +39,12 @@ int main() {
 
 	PFBWorld* world;
 	PFBResult result = PFBOpenWorld(path.c_str(), &world);
+	if(PFB_FAILED(result)) {
+	    return 1;
+	}
+
+	PFBChunk* chunk;
+	result = PFBLoadChunk(world, &chunk, 0, 0, PFB_OVERWORLD);
 	if(PFB_FAILED(result)) {
 	    return 1;
 	}
