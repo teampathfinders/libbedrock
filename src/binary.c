@@ -82,3 +82,7 @@ int ReadInt(ByteStream* pStream) {
     pStream->position += 4;
     return value;
 }
+
+void Advance(ByteStream* pStream, unsigned int amount) {
+    pStream->position += amount;
+}

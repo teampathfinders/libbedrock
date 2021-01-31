@@ -22,6 +22,7 @@
 typedef struct Subchunk_T {
     unsigned char version;
     unsigned char storageCount;
+    unsigned short* blocks; // 4096 blocks
 
     unsigned char y;
 } Subchunk;

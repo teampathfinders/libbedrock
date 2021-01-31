@@ -12,7 +12,7 @@ add_library(
         include/chunk.h
         src/chunk.c
         include/binary.h
-        src/binary.c)
+        src/binary.c include/nbt.h src/nbt.c)
 
 target_include_directories(
         BedrockFormat PRIVATE

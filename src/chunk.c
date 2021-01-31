@@ -93,14 +93,40 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         pSubchunk->storageCount = ReadByte(stream);
     }
 
-    unsigned char bitsPerBlock = pSubchunk->version >> 1;
-    printf("Bits per block: %i\n", bitsPerBlock);
+    pSubchunk->blocks = malloc(sizeof(unsigned short) * 4096);
+    if(pSubchunk->blocks == NULL) {
+        fprintf(stderr, "Failed to allocate 4096 block states\n");
+        DestroyByteStream(stream, 1);
+        free(pSubchunk);
+        return ALLOCATION_FAILED;
+    }
 
-    unsigned char blocksPerWord = floor(32 / bitsPerBlock);
-    printf("Blocks per word: %i\n", blocksPerWord);
+    for(unsigned char i = 0; i < pSubchunk->storageCount; i++) {
+        unsigned char bitsPerBlock = pSubchunk->version >> 1;
+        printf("Bits per block: %i\n", bitsPerBlock);
 
-    unsigned int blockStatesSize = ceil(4096 / blocksPerWord);
-    printf("Block states size: %i\n", blockStatesSize);
+        unsigned char blocksPerWord = floor(32.0 / bitsPerBlock);
+        printf("Blocks per word: %i\n", blocksPerWord);
+
+        unsigned int blockStatesSize = ceil(4096.0 / blocksPerWord);
+        printf("Block states size: %i\n", blockStatesSize);
+
+        for(unsigned int j = 0; j < 4096; j++) {
+            const unsigned int allOnes = 0xFFFFFFFF;
+            unsigned int lowerZeros = allOnes << bitsPerBlock;
+            unsigned int lowerOnes = ~lowerZeros;
+
+            unsigned int w = ReadInt(stream);
+            for(unsigned int k = 0; k < (32 / bitsPerBlock); k++) {
+                pSubchunk->blocks[j] = w & lowerOnes;
+                printf("%i ", pSubchunk->blocks[j]);
+                w >>= bitsPerBlock;
+            }
+        }
+
+        unsigned int paletteSize = ReadInt(stream);
+        printf("Palette size: %i\n", paletteSize);
+    }
 
     *ppSubchunk = pSubchunk;
 

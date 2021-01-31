@@ -14,24 +14,5 @@
 // You should have received a copy of the GNU General Public License
 // along with BedrockFormat.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BEDROCKFORMAT_BINARY_H
-#define BEDROCKFORMAT_BINARY_H
+#include "nbt.h"
 
-typedef struct ByteStream_T {
-    unsigned int position;
-    unsigned char* buffer;
-} ByteStream;
-
-ByteStream* CreateByteStream(unsigned int preAllocated);
-ByteStream* CreateFilledByteStream(unsigned char* data, unsigned int size);
-void DestroyByteStream(ByteStream* pStream, _Bool freeBuffer);
-
-void WriteByte(ByteStream* pStream, unsigned char value);
-void WriteInt(ByteStream* pStream, int value);
-
-unsigned char ReadByte(ByteStream* pStream);
-int ReadInt(ByteStream* pStream);
-
-void Advance(ByteStream* pStream, unsigned int amount);
-
-#endif //BEDROCKFORMAT_BINARY_H
