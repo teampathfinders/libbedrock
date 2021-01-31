@@ -33,14 +33,16 @@ public:
     void Logv(const char*, va_list) override {};
 };
 
-PFBResult PFBOpenWorld(const char* path, PFBWorld** ppWorld) {
+// Open a new database
+Result OpenWorld(const char* path, World** ppWorld) {
     if(readOptions.decompress_allocator == nullptr) {
         readOptions.decompress_allocator = new leveldb::DecompressAllocator();
     }
 
-    *ppWorld = new PFBWorld();
-    PFBWorld* pWorld = *ppWorld;
+    *ppWorld = new World();
+    World* pWorld = *ppWorld;
 
+    // Configuration
     leveldb::Options options;
     options.filter_policy = leveldb::NewBloomFilterPolicy(10);
     options.block_cache = leveldb::NewLRUCache(40 * 1024 * 1024);
@@ -49,36 +51,40 @@ PFBResult PFBOpenWorld(const char* path, PFBWorld** ppWorld) {
     options.compressors[0] = new leveldb::ZlibCompressorRaw(-1);
     options.compressors[1] = new leveldb::ZlibCompressor();
 
+    // Open database
     leveldb::Status status = leveldb::DB::Open(options, path, (leveldb::DB**)&pWorld->db);
     if(!status.ok()) {
         std::cerr << "Failed to open database with error: " << status.ToString() << std::endl;
-        return PFB_DATABASE_OPEN_ERROR;
+        return DATABASE_OPEN_ERROR;
     }
 
-    return PFB_SUCCESS;
+    return SUCCESS;
 }
 
-PFBResult PFBCloseWorld(PFBWorld* pWorld) {
+// Close the database
+Result CloseWorld(World* pWorld) {
     delete (leveldb::DB*)pWorld->db;
     delete pWorld;
 
-    return PFB_SUCCESS;
+    return SUCCESS;
 }
 
-PFBResult PFBLoadEntry(PFBWorld* pWorld, const char* key, unsigned int keyLen, char** pBuffer, unsigned int* pBufferLen) {
-    leveldb::Slice slice = leveldb::Slice(key, keyLen);
+// Load a database entry
+unsigned char* LoadEntry(World* pWorld, const unsigned char* key, unsigned int keyLen, unsigned int* pBufferLen) {
+    leveldb::Slice slice = leveldb::Slice(reinterpret_cast<const char*>(key), keyLen);
     std::string cppValue;
 
+    // Load from database
     leveldb::Status status = ((leveldb::DB*)pWorld->db)->Get(readOptions, slice, &cppValue);
     if(!status.ok()) {
         std::cerr << "Failed to read database entry with error: " << status.ToString() << std::endl;
-        return PFB_DATABASE_READ_ERROR;
+        return nullptr;
     }
 
+    // Copy the string content into a char array to be able to use it in C
     *pBufferLen = cppValue.length();
-    *pBuffer = new char[cppValue.length()];
+    auto buffer = new unsigned char[cppValue.length() + 1];
 
-    memcpy(*pBuffer, cppValue.data(), cppValue.length());
-
-    return PFB_SUCCESS;
+    memcpy(buffer, cppValue.c_str(), cppValue.length());
+    return buffer;
 }

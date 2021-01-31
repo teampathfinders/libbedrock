@@ -14,24 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with BedrockFormat.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BEDROCKFORMAT_CHUNK_H
-#define BEDROCKFORMAT_CHUNK_H
+#ifndef BEDROCKFORMAT_BINARY_H
+#define BEDROCKFORMAT_BINARY_H
 
-#include "format.h"
+typedef struct ByteStream_T {
+    unsigned int position;
+    unsigned char* buffer;
+} ByteStream;
 
-typedef struct Subchunk_T {
-    unsigned char version;
-    unsigned char storageCount;
+ByteStream* CreateByteStream(unsigned int preAllocated);
+ByteStream* CreateFilledByteStream(unsigned char* data, unsigned int size);
+void DestroyByteStream(ByteStream* pStream, _Bool freeBuffer);
 
-    unsigned char y;
-} Subchunk;
+void WriteByte(ByteStream* pStream, unsigned char value);
+void WriteInt(ByteStream* pStream, int value);
 
-typedef struct Chunk_T {
-    int x, z;
-    Subchunk* pSubchunks;
-} Chunk;
+unsigned char ReadByte(ByteStream* pStream);
+int ReadInt(ByteStream* pStream);
 
-Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension);
-Result LoadChunk(World* pWorld, Chunk** ppChunk, int x, int z, Dimension dimension);
-
-#endif //BEDROCKFORMAT_CHUNK_H
+#endif //BEDROCKFORMAT_BINARY_H

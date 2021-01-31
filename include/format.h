@@ -1,34 +1,34 @@
 #ifndef BEDROCK_FORMAT_FORMAT_HPP
 #define BEDROCK_FORMAT_FORMAT_HPP
 
-#include "chunk.h"
+#define PFB_FAILED(x) x != SUCCESS
 
-#define PFB_FAILED(x) x != PFB_SUCCESS
+typedef enum Result_T {
+    SUCCESS,
+    ALLOCATION_FAILED,
+    DATABASE_OPEN_ERROR,
+    DATABASE_READ_ERROR,
+    INVALID_DATA
+} Result;
 
-typedef enum PFBResult_T {
-    PFB_SUCCESS,
-    PFB_DATABASE_OPEN_ERROR,
-    PFB_DATABASE_READ_ERROR
-} PFBResult;
-
-typedef struct PFBWorld_T {
+typedef struct World_T {
     void* db;
-} PFBWorld;
+} World;
 
-typedef enum PFBDimension_T {
-    PFB_OVERWORLD,
-    PFB_NETHER,
-    PFB_END
-} PFBDimension;
+typedef enum Dimension_T {
+    OVERWORLD,
+    NETHER,
+    END
+} Dimension;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-PFBResult PFBOpenWorld(const char *path, PFBWorld** ppWorld);
-PFBResult PFBCloseWorld(PFBWorld* pWorld);
+Result OpenWorld(const char *path, World** ppWorld);
+Result CloseWorld(World* pWorld);
 
-PFBResult PFBLoadEntry(PFBWorld* pWorld, const char* key, unsigned int keyLen, char* pBuffer, unsigned int* pBufferLen);
+unsigned char* LoadEntry(World* pWorld, const unsigned char* key, unsigned int keyLen, unsigned int* pBufferLen);
 
 #ifdef __cplusplus
 }

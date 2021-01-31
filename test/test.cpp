@@ -3,20 +3,21 @@
 // Copyright (c) 2021 Pathfinders. All rights reserved
 //
 
-#include "format.h"
-#include "chunk.h"
+extern "C" {
+    #include "format.h"
+    #include "chunk.h"
+}
 
 #include <windows.h>
 #include <shlobj.h>
 
 #include <iostream>
 #include <filesystem>
-#include <string>
 #include <stdexcept>
 
 std::string GetSaveDirectory() {
 	TCHAR szPath[MAX_PATH];
-	if(FAILED(SHGetFolderPath(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, szPath))) {
+	if(PFB_FAILED(SHGetFolderPath(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, szPath))) {
 		throw std::runtime_error("Failed to get AppData path");
 	}
 
@@ -37,20 +38,20 @@ int main() {
 	std::string path = GetFirstSave();
 	std::cout << path << std::endl;
 
-	PFBWorld* world;
-	PFBResult result = PFBOpenWorld(path.c_str(), &world);
-	if(PFB_FAILED(result)) {
+	World* world;
+	Result result = OpenWorld(path.c_str(), &world);
+	if(FAILED(result)) {
 	    return 1;
 	}
 
-	PFBChunk* chunk;
-	result = PFBLoadChunk(world, &chunk, 0, 0, PFB_OVERWORLD);
-	if(PFB_FAILED(result)) {
+	Subchunk* chunk;
+	result = LoadSubchunk(world, &chunk, 0, 0, 0, OVERWORLD);
+	if(FAILED(result)) {
 	    return 1;
 	}
 
-	result = PFBCloseWorld(world);
-	if(PFB_FAILED(result)) {
+	result = CloseWorld(world);
+	if(FAILED(result)) {
 	    return 1;
 	}
 	return 0;

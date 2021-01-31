@@ -11,7 +11,8 @@ add_library(
         src/format.cpp
         include/chunk.h
         src/chunk.c
-)
+        include/binary.h
+        src/binary.c)
 
 target_include_directories(
         BedrockFormat PRIVATE
