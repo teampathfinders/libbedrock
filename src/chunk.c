@@ -17,6 +17,7 @@
 #include "chunk.h"
 #include "binary.h"
 #include "format.h"
+#include "nbt.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,7 +77,7 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
 
     pSubchunk->version = ReadByte(stream);
     printf("Subchunk version: %i\n", pSubchunk->version);
-    if(pSubchunk->version != 1 && pSubchunk->version != 8) {
+    if(pSubchunk->version != 8 && pSubchunk->version != 1) {
         // Invalid subchunk
         fprintf(
             stderr, "Subchunk %i, %i, %i has version %i (should be either 1 or 8)\n",
@@ -101,26 +102,32 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         return ALLOCATION_FAILED;
     }
 
-    for(unsigned char i = 0; i < pSubchunk->storageCount; i++) {
-        unsigned char bitsPerBlock = pSubchunk->version >> 1;
+//    for(unsigned char i = 0; i < pSubchunk->storageCount; i++) {
+    for(unsigned char i = 0; i < 1; i++) {
+        unsigned char version = ReadByte(stream);
+        unsigned char bitsPerBlock = version >> 1;
+        unsigned char blocksPerWord = (unsigned char)floor(32.0 / (double)bitsPerBlock);
+        unsigned int blockDataSize = (unsigned int)ceil(4096.0 / (double)blocksPerWord);
+
+        printf("--------------------------\nChunk version: %i\n", version);
         printf("Bits per block: %i\n", bitsPerBlock);
-
-        unsigned char blocksPerWord = floor(32.0 / bitsPerBlock);
         printf("Blocks per word: %i\n", blocksPerWord);
+        printf("Block data size: %i bytes\n", blockDataSize);
 
-        unsigned int blockStatesSize = ceil(4096.0 / blocksPerWord);
-        printf("Block states size: %i\n", blockStatesSize);
-
-        for(unsigned int j = 0; j < 4096; j++) {
-            const unsigned int allOnes = 0xFFFFFFFF;
-            unsigned int lowerZeros = allOnes << bitsPerBlock;
-            unsigned int lowerOnes = ~lowerZeros;
-
+        for(unsigned int j = 0; j < 4096;) {
             unsigned int w = ReadInt(stream);
+
             for(unsigned int k = 0; k < (32 / bitsPerBlock); k++) {
-                pSubchunk->blocks[j] = w & lowerOnes;
-                printf("%i ", pSubchunk->blocks[j]);
+                const unsigned int allOnes = 0xFFFFFFFF;
+                unsigned int lowerZeros = allOnes << bitsPerBlock;
+                unsigned int lowerOnes = ~lowerZeros;
+
+                unsigned int b = w & lowerOnes;
+                pSubchunk->blocks[j] = (unsigned short)b;
+                printf("%i ", b);
+
                 w >>= bitsPerBlock;
+                j++;
             }
         }
 

@@ -16,3 +16,14 @@
 
 #include "nbt.h"
 
+#include <stdio.h>
+
+void DecodeNBTCompound(ByteStream* pStream) {
+    unsigned char tagType = ReadByte(pStream);
+    if(tagType != NBT_COMPOUND) {
+        fprintf(stderr, "The top-level NBT tag is not a compound type (it is %i)\n", tagType);
+        return;
+    }
+
+    printf("woof\n");
+}
