@@ -41,25 +41,43 @@ int main() {
 
 	World* world;
 	Result result = OpenWorld(path.c_str(), &world);
-	if(FAILED(result)) {
+	if(PFB_FAILED(result)) {
 	    return 1;
 	}
 
-    auto t1 = std::chrono::high_resolution_clock::now();
-	Subchunk* chunk;
-	result = LoadSubchunk(world, &chunk, 0, 0, 0, OVERWORLD);
-	if(FAILED(result)) {
+//	int max_x = 150, max_y = 16, max_z = 150;
+//
+//    auto t1 = std::chrono::high_resolution_clock::now();
+//	for(int x = 0; x < max_x; x++) {
+//	    for(int y = 0; y < max_y; y++) {
+//	        for(int z = 0; z < max_z; z++) {
+//                Subchunk* chunk;
+//                result = LoadSubchunk(world, &chunk, x, y, z, OVERWORLD);
+//                if(FAILED(result)) {
+//                    return 1;
+//                }
+//
+//                FreeSubchunk(chunk);
+//	        }
+//	    }
+//	}
+//    auto t2 = std::chrono::high_resolution_clock::now();
+//    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+//
+//	std::cout << "Parsed a 16x16x16 subchunk in " << duration << " milliseconds" << std::endl;
+
+    Subchunk* subchunk;
+	result = LoadSubchunk(world, &subchunk, 0, 0, 0, OVERWORLD);
+	if(PFB_FAILED(result)) {
+	    fprintf(stderr, "LoadSubchunk failed with error: %s\n", FormatErrorToString(result));
 	    return 1;
 	}
-	auto t2 = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 
-	std::cout << "Parsed a 16x16x16 subchunk in " << duration << " microseconds" << std::endl;
-
-	FreeSubchunk(chunk);
+	PrintNbtTag(GetBlockAtPosition(subchunk, 0, 0, 0));
+	FreeSubchunk(subchunk);
 
 	result = CloseWorld(world);
-	if(FAILED(result)) {
+	if(PFB_FAILED(result)) {
 	    return 1;
 	}
 	return 0;

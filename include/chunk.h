@@ -22,18 +22,21 @@
 
 typedef struct Subchunk_T {
     unsigned char version;
-    unsigned short* blocks; // 4096 blocks
+    unsigned short blocks[4096]; // 4096 blocks
     unsigned short paletteSize;
     NbtTag** palette;
 } Subchunk;
 
-typedef struct Chunk_T {
-    Subchunk* pSubchunks;
-} Chunk;
+typedef struct SubchunkPosition_T {
+    int x;
+    unsigned char y;
+    int z;
+} SubchunkPosition;
 
 Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension);
 void FreeSubchunk(Subchunk* pSubchunk);
+void PrintSubchunk(Subchunk* pSubchunk);
 
-Result LoadChunk(World* pWorld, Chunk** ppChunk, int x, int z, Dimension dimension);
+NbtTag* GetBlockAtPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z);
 
 #endif //BEDROCKFORMAT_CHUNK_H

@@ -67,10 +67,12 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
 
     // Load the subchunk from the database using the generated key
     unsigned int rawBufferLen;
-    unsigned char* rawBuffer = LoadEntry(pWorld, key, keyLen, &rawBufferLen);
+    unsigned char* rawBuffer;
+    Result result = LoadEntry(pWorld, key, keyLen, &rawBuffer, &rawBufferLen);
     free(key);
-    if(rawBufferLen == 0) {
-        return DATABASE_READ_ERROR;
+
+    if(PFB_FAILED(result)) {
+        return result;
     }
 
     // Move the buffer into a byte stream to be able to read and write
@@ -81,7 +83,6 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
     }
 
     pSubchunk->version = ReadByte(stream);
-//    printf("Subchunk version: %i\n", pSubchunk->version);
     if(pSubchunk->version != 8 && pSubchunk->version != 1) {
         // Invalid subchunk
         fprintf(
@@ -100,24 +101,9 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         storageCount = ReadByte(stream);
     }
 
-    pSubchunk->blocks = malloc(sizeof(unsigned short) * 4096);
-    if(pSubchunk->blocks == NULL) {
-        fprintf(stderr, "Failed to allocate 4096 block states\n");
-        DestroyByteStream(stream, 1);
-        free(pSubchunk);
-        return ALLOCATION_FAILED;
-    }
-
     for(unsigned char i = 0; i < 1; i++) {
         unsigned char version = ReadByte(stream);
         unsigned char bitsPerBlock = version >> 1;
-        unsigned char blocksPerWord = (unsigned char)floor(32.0 / (double)bitsPerBlock);
-        unsigned int blockDataSize = (unsigned int)ceil(4096.0 / (double)blocksPerWord);
-
-//        printf("--------------------------\nChunk version: %i\n", version);
-//        printf("Bits per block: %i\n", bitsPerBlock);
-//        printf("Blocks per word: %i\n", blocksPerWord);
-//        printf("Block data size: %i bytes\n", blockDataSize);
 
         unsigned int len = 0;
         while(len < 4096) {
@@ -138,8 +124,6 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         }
 
         unsigned int paletteSize = ReadInt(stream);
-//        printf("Palette size: %i\n", paletteSize);
-
         pSubchunk->paletteSize = paletteSize;
         pSubchunk->palette = malloc(sizeof(NbtTag*) * paletteSize);
         if(pSubchunk->palette == NULL) {
@@ -168,7 +152,7 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
                 DestroyByteStream(stream, 1);
                 free(pSubchunk->palette);
                 free(pSubchunk);
-                return ALLOCATION_FAILED;
+                return DESERIALIZATION_FAILED;
             }
 
             NbtTag* tag = malloc(sizeof(NbtTag));
@@ -204,8 +188,14 @@ void FreeSubchunk(Subchunk* pSubchunk) {
     free(pSubchunk);
 }
 
-Result LoadChunk(World* pWorld, Chunk** ppChunk, int x, int z, Dimension dimension) {
+void PrintSubchunk(Subchunk* pSubchunk) {
+    printf("Subchunk version: %i\n", pSubchunk->version);
+    printf("Palette block count: %i\n", pSubchunk->paletteSize);
+    for(unsigned short i = 0; i < pSubchunk->paletteSize; i++) {
+        PrintNbtTag(pSubchunk->palette[i]);
+    }
+}
 
-
-    return SUCCESS;
+NbtTag* GetBlockAtPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z) {
+    return pSubchunk->palette[pSubchunk->blocks[16 * 16 * x + 16 * z + y]];
 }

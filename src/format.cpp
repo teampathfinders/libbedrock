@@ -42,6 +42,11 @@ Result OpenWorld(const char* path, World** ppWorld) {
     *ppWorld = new World();
     World* pWorld = *ppWorld;
 
+    if(hashmap_create(1, &pWorld->chunkCache) != 0) {
+        std::cerr << "Failed to create chunk cache hashmap" << std::endl;
+        return ALLOCATION_FAILED;
+    }
+
     // Configuration
     leveldb::Options options;
     options.filter_policy = leveldb::NewBloomFilterPolicy(10);
@@ -63,6 +68,7 @@ Result OpenWorld(const char* path, World** ppWorld) {
 
 // Close the database
 Result CloseWorld(World* pWorld) {
+    hashmap_destroy(&pWorld->chunkCache);
     delete (leveldb::DB*)pWorld->db;
     delete pWorld;
 
@@ -70,15 +76,19 @@ Result CloseWorld(World* pWorld) {
 }
 
 // Load a database entry
-unsigned char* LoadEntry(World* pWorld, const unsigned char* key, unsigned int keyLen, unsigned int* pBufferLen) {
+Result LoadEntry(
+    World* pWorld, const unsigned char* key, unsigned int keyLen, unsigned char** ppBuffer, unsigned int* pBufferLen
+) {
     leveldb::Slice slice = leveldb::Slice(reinterpret_cast<const char*>(key), keyLen);
     std::string cppValue;
 
     // Load from database
     leveldb::Status status = ((leveldb::DB*)pWorld->db)->Get(readOptions, slice, &cppValue);
     if(!status.ok()) {
-        std::cerr << "Failed to read database entry with error: " << status.ToString() << std::endl;
-        return nullptr;
+        if(status.IsNotFound()) {
+            return SUBCHUNK_NOT_FOUND;
+        }
+        return DATABASE_READ_ERROR;
     }
 
     // Copy the string content into a char array to be able to use it in C
@@ -86,5 +96,28 @@ unsigned char* LoadEntry(World* pWorld, const unsigned char* key, unsigned int k
     auto buffer = new unsigned char[cppValue.length() + 1];
 
     memcpy(buffer, cppValue.c_str(), cppValue.length());
-    return buffer;
+    *ppBuffer = buffer;
+
+    return SUCCESS;
+}
+
+const char* FormatErrorToString(Result error) {
+    switch(error) {
+        case SUCCESS:
+            return "SUCCESS";
+        case SUBCHUNK_NOT_FOUND:
+            return "SUBCHUNK_NOT_FOUND";
+        case ALLOCATION_FAILED:
+            return "ALLOCATION_FAILED";
+        case DATABASE_OPEN_ERROR:
+            return "DATABASE_OPEN_ERROR";
+        case DATABASE_READ_ERROR:
+            return "DATABASE_READ_ERROR";
+        case INVALID_DATA:
+            return "INVALID_DATA";
+        case DESERIALIZATION_FAILED:
+            return "DESERIALIZATION_FAILED";
+        default:
+            return "UNKNOWN";
+    }
 }
