@@ -14,6 +14,7 @@ extern "C" {
 #include <iostream>
 #include <filesystem>
 #include <stdexcept>
+#include <chrono>
 
 std::string GetSaveDirectory() {
 	TCHAR szPath[MAX_PATH];
@@ -44,11 +45,16 @@ int main() {
 	    return 1;
 	}
 
+    auto t1 = std::chrono::high_resolution_clock::now();
 	Subchunk* chunk;
 	result = LoadSubchunk(world, &chunk, 0, 0, 0, OVERWORLD);
 	if(FAILED(result)) {
 	    return 1;
 	}
+	auto t2 = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+
+	std::cout << "Parsed a 16x16x16 subchunk in " << duration << " microseconds" << std::endl;
 
 	result = CloseWorld(world);
 	if(FAILED(result)) {

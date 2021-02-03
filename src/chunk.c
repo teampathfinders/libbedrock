@@ -107,7 +107,6 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         return ALLOCATION_FAILED;
     }
 
-//    for(unsigned char i = 0; i < pSubchunk->storageCount; i++) {
     for(unsigned char i = 0; i < 1; i++) {
         unsigned char version = ReadByte(stream);
         unsigned char bitsPerBlock = version >> 1;
@@ -119,47 +118,38 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         printf("Blocks per word: %i\n", blocksPerWord);
         printf("Block data size: %i bytes\n", blockDataSize);
 
-        for(unsigned int j = 0; j < 4096;) {
-            unsigned int w = ReadInt(stream);
+        unsigned int len = 0;
+        while(len < 4096) {
+            int w = ReadInt(stream);
 
-            for(unsigned int k = 0; k < (32 / bitsPerBlock); k++) {
-                const unsigned int allOnes = 0xFFFFFFFF;
-                unsigned int lowerZeros = allOnes << bitsPerBlock;
-                unsigned int lowerOnes = ~lowerZeros;
+            unsigned int blockCount = 32 / bitsPerBlock;
+            unsigned int allOnes = 0xFFFFFFFF;
+            unsigned int lowerZeros = allOnes << bitsPerBlock;
+            unsigned int lowerOnes = ~lowerZeros;
 
+            for(unsigned int j = 0; j < blockCount && len < 4096; j++) {
                 unsigned int b = w & lowerOnes;
-                pSubchunk->blocks[j] = (unsigned short)b;
+                pSubchunk->blocks[len] = (unsigned short)b;
+                len++;
+                printf("len: %i\n", len);
 
                 w >>= bitsPerBlock;
-                j++;
             }
         }
-        printf("\n");
 
         unsigned int paletteSize = ReadInt(stream);
         printf("Palette size: %i\n", paletteSize);
 
-
         for(unsigned int j = 0; j < paletteSize; j++) {
-//            struct hashmap_s compoundHashmap;
-//            if(hashmap_create(1, &compoundHashmap) != 0) {
-//                fprintf(stderr, "Failed to create hashmap\n");
-//                DestroyByteStream(stream, 1);
-//                free(pSubchunk);
-//                return ALLOCATION_FAILED;
-//            }
-//
-//            stream->position += 3; // Skip tag type and name
-//
-//            if(!DecodeNbtTagWithParent(stream, &compoundHashmap)) {
-//                fprintf(stderr, "Failed to create hashmap\n");
-//                hashmap_destroy(&compoundHashmap);
-//                DestroyByteStream(stream, 1);
-//                free(pSubchunk);
-//                return ALLOCATION_FAILED;
-//            }
+            struct hashmap_s compoundHashmap;
+            if(hashmap_create(1, &compoundHashmap) != 0) {
+                fprintf(stderr, "Failed to create hashmap\n");
+                DestroyByteStream(stream, 1);
+                free(pSubchunk);
+                return ALLOCATION_FAILED;
+            }
 
-            stream->position += 3; // Skip compound type and empty name
+            stream->position += 3; // Skip tag type and name
 
             struct hashmap_s compoundEntries;
             if(hashmap_create(2, &compoundEntries)) {
