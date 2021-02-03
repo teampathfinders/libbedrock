@@ -46,6 +46,11 @@ inline unsigned char* GenerateSubchunkKey(int x, unsigned char y, int z, Dimensi
     return buffer;
 }
 
+static int log_hashmap(void* const context, struct hashmap_element_s* const e) {
+    printf("\t- %s\n", e->key);
+    return 1;
+}
+
 Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension) {
     Subchunk* pSubchunk = malloc(sizeof(Subchunk));
     if(pSubchunk == NULL) {
@@ -124,15 +129,70 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
 
                 unsigned int b = w & lowerOnes;
                 pSubchunk->blocks[j] = (unsigned short)b;
-                printf("%i ", b);
 
                 w >>= bitsPerBlock;
                 j++;
             }
         }
+        printf("\n");
 
         unsigned int paletteSize = ReadInt(stream);
         printf("Palette size: %i\n", paletteSize);
+
+
+        for(unsigned int j = 0; j < paletteSize; j++) {
+//            struct hashmap_s compoundHashmap;
+//            if(hashmap_create(1, &compoundHashmap) != 0) {
+//                fprintf(stderr, "Failed to create hashmap\n");
+//                DestroyByteStream(stream, 1);
+//                free(pSubchunk);
+//                return ALLOCATION_FAILED;
+//            }
+//
+//            stream->position += 3; // Skip tag type and name
+//
+//            if(!DecodeNbtTagWithParent(stream, &compoundHashmap)) {
+//                fprintf(stderr, "Failed to create hashmap\n");
+//                hashmap_destroy(&compoundHashmap);
+//                DestroyByteStream(stream, 1);
+//                free(pSubchunk);
+//                return ALLOCATION_FAILED;
+//            }
+
+            stream->position += 3; // Skip compound type and empty name
+
+            struct hashmap_s compoundEntries;
+            if(hashmap_create(2, &compoundEntries)) {
+                fprintf(stderr, "Failed to create hashmap\n");
+                DestroyByteStream(stream, 1);
+                free(pSubchunk);
+                return ALLOCATION_FAILED;
+            }
+
+            int decodeResult = DecodeNbtTagWithParent(stream, &compoundEntries);
+            if(!decodeResult) {
+                fprintf(stderr, "Failed to decode NTB entry\n");
+                hashmap_destroy(&compoundEntries);
+                DestroyByteStream(stream, 1);
+                free(pSubchunk);
+                return ALLOCATION_FAILED;
+            }
+
+            NbtTag* tag = malloc(sizeof(NbtTag));
+            if(tag == NULL) {
+                fprintf(stderr, "Failed to decode NTB entry\n");
+                hashmap_destroy(&compoundEntries);
+                DestroyByteStream(stream, 1);
+                free(pSubchunk);
+                return ALLOCATION_FAILED;
+            }
+
+            tag->type = NBT_COMPOUND;
+            tag->payload = &compoundEntries;
+
+            PrintNbtTag(tag);
+            FreeNbtTag(tag);
+        }
     }
 
     *ppSubchunk = pSubchunk;

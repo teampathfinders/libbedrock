@@ -62,11 +62,53 @@ void WriteByte(ByteStream* pStream, unsigned char value) {
     pStream->position++;
 }
 
+void WriteShort(ByteStream* pStream, short value) {
+    for(unsigned char i = 0; i < 2; i++) {
+        pStream->buffer[pStream->position + i] = (char)value << (i * 8);
+    }
+    pStream->position += 2;
+}
+
 void WriteInt(ByteStream* pStream, int value) {
-    for(unsigned char i = 0; i < 5; i++) {
+    for(unsigned char i = 0; i < 4; i++) {
         pStream->buffer[pStream->position + i] = (char)value << (i * 8);
     }
     pStream->position += 4;
+}
+
+void WriteLong(ByteStream* pStream, long value) {
+    for(unsigned char i = 0; i < 8; i++) {
+        pStream->buffer[pStream->position + i] = (char)value << (i * 8);
+    }
+    pStream->position += 8;
+}
+
+void WriteFloat(ByteStream* pStream, float value) {
+    union {
+        unsigned char bytes[4];
+        float f;
+    } u;
+
+    u.f = value;
+
+    for(unsigned char i = 0; i < 4; i++) {
+        pStream->buffer[pStream->position + i] = u.bytes[i];
+    }
+    pStream->position += 4;
+}
+
+void WriteDouble(ByteStream* pStream, double value) {
+    union {
+        unsigned char bytes[8];
+        double d;
+    } u;
+
+    u.d = value;
+
+    for(unsigned char i = 0; i < 8; i++) {
+        pStream->buffer[pStream->position + i] = u.bytes[i];
+    }
+    pStream->position += 8;
 }
 
 unsigned char ReadByte(ByteStream* pStream) {
@@ -74,13 +116,59 @@ unsigned char ReadByte(ByteStream* pStream) {
     return pStream->buffer[pStream->position - 1];
 }
 
+short ReadShort(ByteStream* pStream) {
+    int value = 0;
+    for(unsigned char i = 0; i < 2; i++) {
+        value += pStream->buffer[pStream->position + i] >> (i * 8);
+    }
+    pStream->position += 2;
+    return (short)value;
+}
+
 int ReadInt(ByteStream* pStream) {
     int value = 0;
     for(unsigned char i = 0; i < 4; i++) {
-        value += (pStream->buffer[pStream->position + i] >> (i * 8));
+        value += pStream->buffer[pStream->position + i] >> (i * 8);
     }
     pStream->position += 4;
     return value;
+}
+
+long ReadLong(ByteStream* pStream) {
+    long value = 0;
+    for(unsigned char i = 0; i < 8; i++) {
+        value += pStream->buffer[pStream->position + i] >> (i * 8);
+    }
+    pStream->position += 8;
+    return value;
+}
+
+float ReadFloat(ByteStream* pStream) {
+    union {
+        unsigned char bytes[4];
+        float f;
+    } u;
+
+    for(unsigned char i = 0; i < 4; i++) {
+        u.bytes[i] = pStream->buffer[pStream->position + i];
+    }
+    pStream->position += 4;
+
+    return u.f;
+}
+
+double ReadDouble(ByteStream* pStream) {
+    union {
+        unsigned char bytes[8];
+        double d;
+    } u;
+
+    for(unsigned char i = 0; i < 8; i++) {
+        u.bytes[i] = pStream->buffer[pStream->position + i];
+    }
+    pStream->position += 8;
+
+    return u.d;
 }
 
 void Advance(ByteStream* pStream, unsigned int amount) {

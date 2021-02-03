@@ -27,10 +27,18 @@ ByteStream* CreateFilledByteStream(unsigned char* data, unsigned int size);
 void DestroyByteStream(ByteStream* pStream, _Bool freeBuffer);
 
 void WriteByte(ByteStream* pStream, unsigned char value);
+void WriteShort(ByteStream* pStream, short value);
 void WriteInt(ByteStream* pStream, int value);
+void WriteLong(ByteStream* pStream, long value);
+void WriteFloat(ByteStream* pStream, float value);
+void WriteDouble(ByteStream* pStream, double value);
 
 unsigned char ReadByte(ByteStream* pStream);
+short ReadShort(ByteStream* pStream);
 int ReadInt(ByteStream* pStream);
+long ReadLong(ByteStream* pStream);
+float ReadFloat(ByteStream* pStream);
+double ReadDouble(ByteStream* pStream);
 
 void Advance(ByteStream* pStream, unsigned int amount);
 

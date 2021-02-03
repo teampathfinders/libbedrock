@@ -4,3 +4,6 @@
 [submodule "libraries/bitstream"]
 	path = libraries/bitstream
 	url = https://github.com/MCPathfinders/bitstream.git
+[submodule "libraries/hashmap"]
+	path = libraries/hashmap
+	url = https://github.com/sheredom/hashmap.h

@@ -18,8 +18,9 @@
 #define BEDROCKFORMAT_NBT_H
 
 #include "binary.h"
+#include "hashmap.h"
 
-enum NBTTag {
+enum NbtTagType {
     NBT_END,
     NBT_BYTE,
     NBT_SHORT,
@@ -35,6 +36,18 @@ enum NBTTag {
     NBT_LONG_ARRAY
 };
 
-void DecodeNBTCompound(ByteStream* pStream);
+const char* NbtTagTypeToString(enum NbtTagType type);
+
+typedef struct NbtTag_T {
+    enum NbtTagType type;
+    void* payload;
+} NbtTag;
+
+char* DecodeRawNbtString(ByteStream* pStream);
+_Bool DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent);
+
+void PrintNbtTagInner(enum NbtTagType type, void* payload, const char* name, int indentation);
+void PrintNbtTag(NbtTag* tag);
+void FreeNbtTag(NbtTag* tag);
 
 #endif //BEDROCKFORMAT_NBT_H
