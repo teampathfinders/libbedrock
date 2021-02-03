@@ -81,7 +81,7 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
     }
 
     pSubchunk->version = ReadByte(stream);
-    printf("Subchunk version: %i\n", pSubchunk->version);
+//    printf("Subchunk version: %i\n", pSubchunk->version);
     if(pSubchunk->version != 8 && pSubchunk->version != 1) {
         // Invalid subchunk
         fprintf(
@@ -93,10 +93,11 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         return INVALID_DATA;
     }
 
+    unsigned char storageCount;
     if(pSubchunk->version == 1) {
-        pSubchunk->storageCount = 1;
+        storageCount = 1;
     } else {
-        pSubchunk->storageCount = ReadByte(stream);
+        storageCount = ReadByte(stream);
     }
 
     pSubchunk->blocks = malloc(sizeof(unsigned short) * 4096);
@@ -113,10 +114,10 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         unsigned char blocksPerWord = (unsigned char)floor(32.0 / (double)bitsPerBlock);
         unsigned int blockDataSize = (unsigned int)ceil(4096.0 / (double)blocksPerWord);
 
-        printf("--------------------------\nChunk version: %i\n", version);
-        printf("Bits per block: %i\n", bitsPerBlock);
-        printf("Blocks per word: %i\n", blocksPerWord);
-        printf("Block data size: %i bytes\n", blockDataSize);
+//        printf("--------------------------\nChunk version: %i\n", version);
+//        printf("Bits per block: %i\n", bitsPerBlock);
+//        printf("Blocks per word: %i\n", blocksPerWord);
+//        printf("Block data size: %i bytes\n", blockDataSize);
 
         unsigned int len = 0;
         while(len < 4096) {
@@ -131,39 +132,41 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
                 unsigned int b = w & lowerOnes;
                 pSubchunk->blocks[len] = (unsigned short)b;
                 len++;
-                printf("len: %i\n", len);
 
                 w >>= bitsPerBlock;
             }
         }
 
         unsigned int paletteSize = ReadInt(stream);
-        printf("Palette size: %i\n", paletteSize);
+//        printf("Palette size: %i\n", paletteSize);
+
+        pSubchunk->paletteSize = paletteSize;
+        pSubchunk->palette = malloc(sizeof(NbtTag*) * paletteSize);
+        if(pSubchunk->palette == NULL) {
+            fprintf(stderr, "Failed to allocate 4096 block states\n");
+            DestroyByteStream(stream, 1);
+            free(pSubchunk);
+            return ALLOCATION_FAILED;
+        }
 
         for(unsigned int j = 0; j < paletteSize; j++) {
-            struct hashmap_s compoundHashmap;
-            if(hashmap_create(1, &compoundHashmap) != 0) {
-                fprintf(stderr, "Failed to create hashmap\n");
-                DestroyByteStream(stream, 1);
-                free(pSubchunk);
-                return ALLOCATION_FAILED;
-            }
-
             stream->position += 3; // Skip tag type and name
 
-            struct hashmap_s compoundEntries;
-            if(hashmap_create(2, &compoundEntries)) {
+            struct hashmap_s* compoundEntries = malloc(sizeof(struct hashmap_s));
+            if(hashmap_create(2, compoundEntries) != 0) {
                 fprintf(stderr, "Failed to create hashmap\n");
                 DestroyByteStream(stream, 1);
+                free(pSubchunk->palette);
                 free(pSubchunk);
                 return ALLOCATION_FAILED;
             }
 
-            int decodeResult = DecodeNbtTagWithParent(stream, &compoundEntries);
+            int decodeResult = DecodeNbtTagWithParent(stream, compoundEntries);
             if(!decodeResult) {
                 fprintf(stderr, "Failed to decode NTB entry\n");
-                hashmap_destroy(&compoundEntries);
+                hashmap_destroy(compoundEntries);
                 DestroyByteStream(stream, 1);
+                free(pSubchunk->palette);
                 free(pSubchunk);
                 return ALLOCATION_FAILED;
             }
@@ -171,17 +174,17 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
             NbtTag* tag = malloc(sizeof(NbtTag));
             if(tag == NULL) {
                 fprintf(stderr, "Failed to decode NTB entry\n");
-                hashmap_destroy(&compoundEntries);
+                hashmap_destroy(compoundEntries);
                 DestroyByteStream(stream, 1);
+                free(pSubchunk->palette);
                 free(pSubchunk);
                 return ALLOCATION_FAILED;
             }
 
             tag->type = NBT_COMPOUND;
-            tag->payload = &compoundEntries;
+            tag->payload = compoundEntries;
 
-            PrintNbtTag(tag);
-            FreeNbtTag(tag);
+            pSubchunk->palette[j] = tag;
         }
     }
 
@@ -191,6 +194,14 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
     DestroyByteStream(stream, 1);
 
     return SUCCESS;
+}
+
+void FreeSubchunk(Subchunk* pSubchunk) {
+    for(unsigned short i = 0; i < pSubchunk->paletteSize; i++) {
+        FreeNbtTag(pSubchunk->palette[i]);
+    }
+    free(pSubchunk->palette);
+    free(pSubchunk);
 }
 
 Result LoadChunk(World* pWorld, Chunk** ppChunk, int x, int z, Dimension dimension) {

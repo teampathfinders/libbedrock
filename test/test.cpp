@@ -56,6 +56,8 @@ int main() {
 
 	std::cout << "Parsed a 16x16x16 subchunk in " << duration << " microseconds" << std::endl;
 
+	FreeSubchunk(chunk);
+
 	result = CloseWorld(world);
 	if(FAILED(result)) {
 	    return 1;

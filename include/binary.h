@@ -24,7 +24,7 @@ typedef struct ByteStream_T {
 
 ByteStream* CreateByteStream(unsigned int preAllocated);
 ByteStream* CreateFilledByteStream(unsigned char* data, unsigned int size);
-void DestroyByteStream(ByteStream* pStream, _Bool freeBuffer);
+void DestroyByteStream(ByteStream* pStream, int freeBuffer);
 
 void WriteByte(ByteStream* pStream, unsigned char value);
 void WriteShort(ByteStream* pStream, short value);

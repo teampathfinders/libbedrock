@@ -52,7 +52,7 @@ ByteStream* CreateFilledByteStream(unsigned char* data, unsigned int size) {
 }
 
 // Destroys a BitStream and if specified, also frees the inner buffer
-void DestroyByteStream(ByteStream* pStream, _Bool freeBuffer) {
+void DestroyByteStream(ByteStream* pStream, int freeBuffer) {
     if(freeBuffer) free(pStream->buffer);
     free(pStream);
 }

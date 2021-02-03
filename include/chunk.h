@@ -18,21 +18,22 @@
 #define BEDROCKFORMAT_CHUNK_H
 
 #include "format.h"
+#include "nbt.h"
 
 typedef struct Subchunk_T {
     unsigned char version;
-    unsigned char storageCount;
     unsigned short* blocks; // 4096 blocks
-
-    unsigned char y;
+    unsigned short paletteSize;
+    NbtTag** palette;
 } Subchunk;
 
 typedef struct Chunk_T {
-    int x, z;
     Subchunk* pSubchunks;
 } Chunk;
 
 Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension);
+void FreeSubchunk(Subchunk* pSubchunk);
+
 Result LoadChunk(World* pWorld, Chunk** ppChunk, int x, int z, Dimension dimension);
 
 #endif //BEDROCKFORMAT_CHUNK_H

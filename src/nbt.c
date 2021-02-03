@@ -36,7 +36,7 @@ char* DecodeRawNbtString(ByteStream* pStream) {
     return string;
 }
 
-_Bool DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
+int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
     for(;;) {
         enum NbtTagType type = ReadByte(pStream);
         if(type == NBT_END) return 1;
@@ -52,43 +52,41 @@ _Bool DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
 
         switch(tag->type) {
             case NBT_BYTE:
-//                tag->payload = malloc(sizeof(unsigned char));
-//                if(tag->payload == NULL) {
-//                    free(tag);
-//                    fprintf(stderr, "Failed to allocate byte on heap\n");
-//                    return 0;
-//                }
-//
-//                unsigned char byteValue = ReadByte(pStream);
-//                memcpy(tag->payload, &byteValue, sizeof(unsigned char));
+                tag->payload = malloc(sizeof(unsigned char));
+                if(tag->payload == NULL) {
+                    free(tag);
+                    fprintf(stderr, "Failed to allocate byte on heap\n");
+                    return 0;
+                }
 
-                tag->payload = (void*)(size_t)ReadByte(pStream);
+                unsigned char byteValue = ReadByte(pStream);
+                memcpy(tag->payload, &byteValue, sizeof(unsigned char));
+
+//                tag->payload = (void*)(size_t)ReadByte(pStream);
                 break;
             case NBT_SHORT:
-//                tag->payload = malloc(sizeof(short));
-//                if(tag->payload == NULL) {
-//                    free(tag);
-//                    fprintf(stderr, "Failed to allocate short on heap\n");
-//                    return 0;
-//                }
-//
-//                short shortValue = ReadShort(pStream);
-//                memcpy(tag->payload, &shortValue, sizeof(short));
+                tag->payload = malloc(sizeof(short));
+                if(tag->payload == NULL) {
+                    free(tag);
+                    fprintf(stderr, "Failed to allocate short on heap\n");
+                    return 0;
+                }
 
-                tag->payload = (void*)(size_t)ReadShort(pStream);
+                short shortValue = ReadShort(pStream);
+                memcpy(tag->payload, &shortValue, sizeof(short));
+
+//                tag->payload = (void*)(size_t)ReadShort(pStream);
                 break;
             case NBT_INT:
-//                tag->payload = malloc(sizeof(int));
-//                if(tag->payload == NULL) {
-//                    free(tag);
-//                    fprintf(stderr, "Failed to allocate int on heap\n");
-//                    return 0;
-//                }
-//
-//                int intValue = ReadInt(pStream);
-//                memcpy(tag->payload, &intValue, sizeof(int));
+                tag->payload = malloc(sizeof(int));
+                if(tag->payload == NULL) {
+                    free(tag);
+                    fprintf(stderr, "Failed to allocate int on heap\n");
+                    return 0;
+                }
 
-                tag->payload = (void*)ReadInt(pStream);
+                int intValue = ReadInt(pStream);
+                memcpy(tag->payload, &intValue, sizeof(int));
 
                 break;
             case NBT_LONG:
@@ -171,22 +169,19 @@ _Bool DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
 
 int FreeHashmapEntries(void* const context, void* const value) {
     FreeNbtTag(value);
-    return -1;
+    return 1;
 }
 
 void FreeNbtTag(NbtTag* tag) {
     switch(tag->type) {
         // These type values are stored in the pointer, they do not have to be freed
-        case NBT_BYTE:
-        case NBT_SHORT:
-        case NBT_INT:
-            break;
         case NBT_COMPOUND:
             hashmap_iterate(tag->payload, FreeHashmapEntries, NULL);
             hashmap_destroy(tag->payload);
             break;
         default:
             free(tag->payload);
+            break;
     }
 
     free(tag);
@@ -231,13 +226,13 @@ void PrintNbtTagInner(enum NbtTagType type, void* const payload, const char* nam
             printf("}\n");
             break;
         case NBT_BYTE:
-            printf("): %i\n", (unsigned char)(size_t)payload);
+            printf("): %i\n", *(unsigned char*)payload);
             break;
         case NBT_SHORT:
-            printf("): %i\n", (short)(size_t)payload);
+            printf("): %i\n", *(short*)payload);
             break;
         case NBT_INT:
-            printf("): %i\n", (int)payload);
+            printf("): %i\n", *(int*)payload);
             break;
         case NBT_LONG:
             printf("): %lu\n", *(long*)payload);
