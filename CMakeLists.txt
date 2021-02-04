@@ -33,5 +33,5 @@ if(BEDROCK_FORMAT_ENABLE_TESTING)
 
         add_executable(test test/test.cpp)
         target_include_directories(test PRIVATE include)
-        target_link_libraries(test PRIVATE BedrockFormat)
+        target_link_libraries(test PRIVATE bedrock_format)
 endif()
