@@ -40,6 +40,4 @@ long ReadLong(ByteStream* pStream);
 float ReadFloat(ByteStream* pStream);
 double ReadDouble(ByteStream* pStream);
 
-void Advance(ByteStream* pStream, unsigned int amount);
-
 #endif //BEDROCKFORMAT_BINARY_H
