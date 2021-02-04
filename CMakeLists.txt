@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.17)
-project(BedrockFormat)
+project(bedrock_format)
 
 set(CMAKE_CXX_STANDARD 17)
 set(BEDROCK_FORMAT_ENABLE_TESTING TRUE)
 
 add_subdirectory(libraries/leveldb)
 add_library(
-        BedrockFormat
+        bedrock_format
         include/format.h
         src/format.cpp
         include/chunk.h
@@ -15,18 +15,18 @@ add_library(
         src/binary.c include/nbt.h src/nbt.c include/hashmap.h)
 
 target_include_directories(
-        BedrockFormat PRIVATE
+        bedrock_format PRIVATE
         include
         libraries/leveldb/Projects/leveldb-mcpe/include
 )
 target_link_libraries(
-        BedrockFormat PRIVATE
+        bedrock_format PRIVATE
         LevelDB-MCPE
 )
 
 if(BEDROCK_FORMAT_ENABLE_TESTING)
         add_custom_command(
-                TARGET BedrockFormat POST_BUILD
+                TARGET bedrock_format POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:LevelDB-MCPE> "${PROJECT_BINARY_DIR}"
                 COMMENT "Copied DLL to test directory"
         )
