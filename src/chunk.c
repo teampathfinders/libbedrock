@@ -23,6 +23,11 @@
 #include <stdlib.h>
 #include <math.h>
 
+/// @brief Generates a key for a subchunk database entry
+/// @param Position Subchunk position
+/// @param pBufferLen Pointer to an unsigned integer containing the length of the returned buffer
+/// @returns The raw subchunk data
+/// @internal
 inline unsigned char* GenerateSubchunkKey(int x, unsigned char y, int z, Dimension dimension, unsigned int* pBufferLen) {
     unsigned int bufferSize = 4 + 4 + 1 + 1;
     if(dimension != OVERWORLD) bufferSize += 4;
@@ -46,11 +51,11 @@ inline unsigned char* GenerateSubchunkKey(int x, unsigned char y, int z, Dimensi
     return buffer;
 }
 
-static int log_hashmap(void* const context, struct hashmap_element_s* const e) {
-    printf("\t- %s\n", e->key);
-    return 1;
-}
-
+/// @brief Loads a subchunk and stores it in the world's chunk cache
+/// @param world World the subchunk is located in
+/// @param position Position of the subchunk
+/// @returns Result
+/// @attention This function has to be called before you can use GetBlockAtWorldPosition or GetBlockAtSubchunkPosition
 Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension) {
     Subchunk* pSubchunk = malloc(sizeof(Subchunk));
     if(pSubchunk == NULL) {
@@ -94,11 +99,8 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         return INVALID_DATA;
     }
 
-    unsigned char storageCount;
-    if(pSubchunk->version == 1) {
-        storageCount = 1;
-    } else {
-        storageCount = ReadByte(stream);
+    if(pSubchunk->version == 8) {
+        stream->position++;
     }
 
     for(unsigned char i = 0; i < 1; i++) {
@@ -180,6 +182,8 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
     return SUCCESS;
 }
 
+/// @brief Frees the subchunk and internal palette entries from memory
+/// @param subchunk Subchunk to be freed
 void FreeSubchunk(Subchunk* pSubchunk) {
     for(unsigned short i = 0; i < pSubchunk->paletteSize; i++) {
         FreeNbtTag(pSubchunk->palette[i]);
@@ -188,6 +192,8 @@ void FreeSubchunk(Subchunk* pSubchunk) {
     free(pSubchunk);
 }
 
+/// @brief Logs the subchunk information to the console
+/// @param subchunk Subchunk to be logged
 void PrintSubchunk(Subchunk* pSubchunk) {
     printf("Subchunk version: %i\n", pSubchunk->version);
     printf("Palette block count: %i\n", pSubchunk->paletteSize);
@@ -196,6 +202,28 @@ void PrintSubchunk(Subchunk* pSubchunk) {
     }
 }
 
+/// @brief Retrieves a block from a subchunk
+/// @param subchunk Subchunk containing the desired block
+/// @param x X-coordinate of the block
+/// @param y Y-coordinate of the block
+/// @param z Z-coordinate of the block
+/// @returns Pointer to an NBT tag
 NbtTag* GetBlockAtPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z) {
     return pSubchunk->palette[pSubchunk->blocks[16 * 16 * x + 16 * z + y]];
+}
+
+/// @brief Retrieves a block from a world
+/// @param world World containing the block
+/// @param position Position of the block
+/// @returns Pointer to an NBT tag
+/// @attention The subchunk the block is located in must have been loaded before using LoadSubchunk
+/// @attention This function is very similar to GetBlockAtSubchunkPosition,
+///            but instead of loading a block from a subchunk it loads it from a world
+NbtTag* GetBlockAtWorldPosition(World* world, Position* position) {
+    Subchunk* subchunk = hashmap_get(&world->chunkCache, (const char*)position, sizeof(Position));
+    if(subchunk == NULL) {
+        return NULL;
+    }
+
+    return subchunk->palette[subchunk->blocks[16 * 16 * position->x + 16 * position->z + position->y]];
 }

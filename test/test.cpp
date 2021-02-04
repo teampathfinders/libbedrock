@@ -69,11 +69,12 @@ int main() {
     Subchunk* subchunk;
 	result = LoadSubchunk(world, &subchunk, 0, 0, 0, OVERWORLD);
 	if(PFB_FAILED(result)) {
-	    fprintf(stderr, "LoadSubchunk failed with error: %s\n", FormatErrorToString(result));
+	    fprintf(stderr, "LoadSubchunk failed with error: %s\n", TranslateErrorString(result));
 	    return 1;
 	}
 
-	PrintNbtTag(GetBlockAtPosition(subchunk, 0, 0, 0));
+	PrintSubchunk(subchunk);
+//	PrintNbtTag(GetBlockAtPosition(subchunk, 0, 0, 0));
 	FreeSubchunk(subchunk);
 
 	result = CloseWorld(world);

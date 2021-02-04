@@ -4,6 +4,7 @@
 #include "hashmap.h"
 
 #define PFB_FAILED(x) x != SUCCESS
+#define UNUSED(x) (void)x
 
 typedef enum Result_T {
     SUCCESS,
@@ -37,7 +38,8 @@ Result LoadEntry(
     World* pWorld, const unsigned char* key, unsigned int keyLen, unsigned char** ppBuffer, unsigned int* pBufferLen
 );
 
-const char* FormatErrorToString(Result error);
+void ClearChunkCache(World* world);
+const char* TranslateErrorString(Result error);
 
 #ifdef __cplusplus
 }

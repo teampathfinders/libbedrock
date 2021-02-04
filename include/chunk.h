@@ -27,16 +27,17 @@ typedef struct Subchunk_T {
     NbtTag** palette;
 } Subchunk;
 
-typedef struct SubchunkPosition_T {
+typedef struct Position_T {
     int x;
     unsigned char y;
     int z;
-} SubchunkPosition;
+} Position;
 
 Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension);
 void FreeSubchunk(Subchunk* pSubchunk);
 void PrintSubchunk(Subchunk* pSubchunk);
 
 NbtTag* GetBlockAtPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z);
+NbtTag* GetBlockAtWorldPosition(World* world, Position* position);
 
 #endif //BEDROCKFORMAT_CHUNK_H

@@ -61,8 +61,6 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
 
                 unsigned char byteValue = ReadByte(pStream);
                 memcpy(tag->payload, &byteValue, sizeof(unsigned char));
-
-//                tag->payload = (void*)(size_t)ReadByte(pStream);
                 break;
             case NBT_SHORT:
                 tag->payload = malloc(sizeof(short));
@@ -74,8 +72,6 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
 
                 short shortValue = ReadShort(pStream);
                 memcpy(tag->payload, &shortValue, sizeof(short));
-
-//                tag->payload = (void*)(size_t)ReadShort(pStream);
                 break;
             case NBT_INT:
                 tag->payload = malloc(sizeof(int));
@@ -87,7 +83,6 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
 
                 int intValue = ReadInt(pStream);
                 memcpy(tag->payload, &intValue, sizeof(int));
-
                 break;
             case NBT_LONG:
                 tag->payload = malloc(sizeof(long));

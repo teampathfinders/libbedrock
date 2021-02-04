@@ -16,8 +16,16 @@
 
 #include "format.h"
 
+extern "C" {
+    #include "chunk.h"
+};
+
 #include <iostream>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4251)
+#endif
 #include <leveldb/env.h>
 #include <leveldb/options.h>
 #include <leveldb/filter_policy.h>
@@ -25,15 +33,23 @@
 #include <leveldb/zlib_compressor.h>
 #include <leveldb/db.h>
 #include <leveldb/decompress_allocator.h>
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 static leveldb::ReadOptions readOptions;
 
+/// @brief An empty logger that is used for the LevelDB database
+/// @internal
 class EmptyLogger : public leveldb::Logger {
 public:
     void Logv(const char*, va_list) override {};
 };
 
-// Open a new database
+/// @brief Opens a new world
+/// @param path Path to the world
+/// @param world Double pointer to a world struct that will be populated with data
+/// @returns Result
 Result OpenWorld(const char* path, World** ppWorld) {
     if(readOptions.decompress_allocator == nullptr) {
         readOptions.decompress_allocator = new leveldb::DecompressAllocator();
@@ -66,7 +82,9 @@ Result OpenWorld(const char* path, World** ppWorld) {
     return SUCCESS;
 }
 
-// Close the database
+/// @brief Closes the LevelDB database and frees the world
+/// @param world World to be freed
+/// @returns Result
 Result CloseWorld(World* pWorld) {
     hashmap_destroy(&pWorld->chunkCache);
     delete (leveldb::DB*)pWorld->db;
@@ -75,7 +93,14 @@ Result CloseWorld(World* pWorld) {
     return SUCCESS;
 }
 
-// Load a database entry
+/// @brief Loads a database entry
+/// @param world World containing the database
+/// @param key Key used to load the entry
+/// @param keyLen Length of the key
+/// @param buffer Buffer to put the data into
+/// @param bufferLen Pointer to an integer containing the length of the data
+/// @returns Result
+/// @internal
 Result LoadEntry(
     World* pWorld, const unsigned char* key, unsigned int keyLen, unsigned char** ppBuffer, unsigned int* pBufferLen
 ) {
@@ -101,7 +126,27 @@ Result LoadEntry(
     return SUCCESS;
 }
 
-const char* FormatErrorToString(Result error) {
+/// @brief Runs for every hashmap entry and frees it
+/// @internal
+int ClearChunkCacheEntry(void* const context, struct hashmap_element_s* const e) {
+    UNUSED(context);
+
+    FreeSubchunk((Subchunk*)e->data);
+    return -1;
+}
+
+/// @brief Clears the chunk cache and frees all the loaded subchunks from memory
+/// @param world World containing the chunk cache
+void ClearChunkCache(World* world) {
+    if(hashmap_iterate_pairs(&world->chunkCache, ClearChunkCacheEntry, nullptr)) {
+        std::cerr << "Failed to free all subchunks in chunk cache" << std::endl;
+    }
+}
+
+/// @brief Converts a result to a readable string
+/// @param error Error to be translated
+/// @returns Error string
+const char* TranslateErrorString(Result error) {
     switch(error) {
         case SUCCESS:
             return "SUCCESS";
