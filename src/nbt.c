@@ -11,13 +11,14 @@
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "nbt.h"
+#include "format.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-char* DecodeRawNbtString(ByteStream* pStream) {
-    unsigned short length = ReadShort(pStream);
+char* DecodeRawNbtString(ByteStream* stream) {
+    unsigned short length = ReadShort(stream);
     if(length == 0) return NULL;
 
     char* string = calloc(length + 1, 1);
@@ -26,15 +27,15 @@ char* DecodeRawNbtString(ByteStream* pStream) {
         return NULL;
     }
 
-    memcpy(string, pStream->buffer + pStream->position, length);
-    pStream->position += length;
+    memcpy(string, stream->buffer + stream->position, length);
+    stream->position += length;
 
     return string;
 }
 
-int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
+int DecodeNbtTagWithParent(ByteStream* stream, struct hashmap_s* parent) {
     for(;;) {
-        enum NbtTagType type = ReadByte(pStream);
+        enum NbtTagType type = ReadByte(stream);
         if(type == NBT_END) return 1;
 
         NbtTag* tag = malloc(sizeof(NbtTag));
@@ -44,7 +45,7 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
         }
 
         tag->type = type;
-        char* name = DecodeRawNbtString(pStream);
+        char* name = DecodeRawNbtString(stream);
 
         switch(tag->type) {
             case NBT_BYTE:
@@ -55,7 +56,7 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
                     return 0;
                 }
 
-                unsigned char byteValue = ReadByte(pStream);
+                unsigned char byteValue = ReadByte(stream);
                 memcpy(tag->payload, &byteValue, sizeof(unsigned char));
                 break;
             case NBT_SHORT:
@@ -66,7 +67,7 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
                     return 0;
                 }
 
-                short shortValue = ReadShort(pStream);
+                short shortValue = ReadShort(stream);
                 memcpy(tag->payload, &shortValue, sizeof(short));
                 break;
             case NBT_INT:
@@ -77,7 +78,7 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
                     return 0;
                 }
 
-                int intValue = ReadInt(pStream);
+                int intValue = ReadInt(stream);
                 memcpy(tag->payload, &intValue, sizeof(int));
                 break;
             case NBT_LONG:
@@ -88,7 +89,7 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
                     return 0;
                 }
 
-                long longValue = ReadLong(pStream);
+                long longValue = ReadLong(stream);
                 memcpy(tag->payload, &longValue, sizeof(long));
                 break;
             case NBT_FLOAT:
@@ -99,7 +100,7 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
                     return 0;
                 }
 
-                float floatValue = ReadFloat(pStream);
+                float floatValue = ReadFloat(stream);
                 memcpy(tag->payload, &floatValue, sizeof(float));
                 break;
             case NBT_DOUBLE:
@@ -110,11 +111,11 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
                     return 0;
                 }
 
-                double doubleValue = ReadDouble(pStream);
+                double doubleValue = ReadDouble(stream);
                 memcpy(tag->payload, &doubleValue, sizeof(double));
                 break;
             case NBT_STRING:
-                tag->payload = DecodeRawNbtString(pStream);
+                tag->payload = DecodeRawNbtString(stream);
                 break;
             case NBT_COMPOUND:
                 struct hashmap_s hashmap;
@@ -133,7 +134,7 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
                 }
 
                 memcpy(tag->payload, &hashmap, sizeof(struct hashmap_s));
-                if(!DecodeNbtTagWithParent(pStream, tag->payload)) {
+                if(!DecodeNbtTagWithParent(stream, tag->payload)) {
                     free(tag);
                     hashmap_destroy(&hashmap);
                     fprintf(stderr,"Failed to allocate memory for hashmap\n");
@@ -159,6 +160,8 @@ int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent) {
 }
 
 int FreeHashmapEntries(void* const context, void* const value) {
+    BF_UNUSED(context);
+
     FreeNbtTag(value);
     return 1;
 }

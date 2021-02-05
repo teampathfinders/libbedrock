@@ -16,6 +16,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef union FloatUnion_T {
+    unsigned char bytes[4];
+    float f;
+} FloatUnion;
+
+typedef union DoubleUnion_T {
+    unsigned char bytes[8];
+    double d;
+} DoubleUnion;
+
 /// @brief Creates a new bytestream to be used for reading and writing binary
 /// @param preAllocated How big the buffer should initially be
 /// @returns Pointer to a bytestream
@@ -58,151 +68,135 @@ ByteStream* CreateFilledByteStream(unsigned char* data, unsigned int size) {
 /// @brief Destroys the bytestream and optionally frees the internal buffer
 /// @param stream Bytestream to be freed
 /// @param freeBuffer Boolean to specify if the internal buffer should be freed too
-void DestroyByteStream(ByteStream* pStream, int freeBuffer) {
-    if(freeBuffer) free(pStream->buffer);
-    free(pStream);
+void DestroyByteStream(ByteStream* stream, int freeBuffer) {
+    if(freeBuffer) free(stream->buffer);
+    free(stream);
 }
 
 /// @brief Writes a byte into the buffer in the bytestream
 /// @param stream Bytestream to write value into
 /// @param value Value to be put written into the buffer
-void WriteByte(ByteStream* pStream, unsigned char value) {
-    pStream->buffer[pStream->position] = value;
-    pStream->position++;
+void WriteByte(ByteStream* stream, unsigned char value) {
+    stream->buffer[stream->position] = value;
+    stream->position++;
 }
 
 /// @brief Writes a short into the buffer in the bytestream
 /// @param stream Bytestream to write value into
 /// @param value Value to be put written into the buffer
-void WriteShort(ByteStream* pStream, short value) {
+void WriteShort(ByteStream* stream, short value) {
     for(unsigned char i = 0; i < 2; i++) {
-        pStream->buffer[pStream->position + i] = (char)value << (i * 8);
+        stream->buffer[stream->position + i] = (char)value << (i * 8);
     }
-    pStream->position += 2;
+    stream->position += 2;
 }
 
 /// @brief Writes an int into the buffer in the bytestream
 /// @param stream Bytestream to write value into
 /// @param value Value to be put written into the buffer
-void WriteInt(ByteStream* pStream, int value) {
+void WriteInt(ByteStream* stream, int value) {
     for(unsigned char i = 0; i < 4; i++) {
-        pStream->buffer[pStream->position + i] = (char)value << (i * 8);
+        stream->buffer[stream->position + i] = (char)value << (i * 8);
     }
-    pStream->position += 4;
+    stream->position += 4;
 }
 
 /// @brief Writes a long into the buffer in the bytestream
 /// @param stream Bytestream to write value into
 /// @param value Value to be put written into the buffer
-void WriteLong(ByteStream* pStream, long value) {
+void WriteLong(ByteStream* stream, long value) {
     for(unsigned char i = 0; i < 8; i++) {
-        pStream->buffer[pStream->position + i] = (char)value << (i * 8);
+        stream->buffer[stream->position + i] = (char)value << (i * 8);
     }
-    pStream->position += 8;
+    stream->position += 8;
 }
 
 /// @brief Writes a float into the buffer in the bytestream
 /// @param stream Bytestream to write value into
 /// @param value Value to be put written into the buffer
-void WriteFloat(ByteStream* pStream, float value) {
-    union {
-        unsigned char bytes[4];
-        float f;
-    } u;
-
-    u.f = value;
+void WriteFloat(ByteStream* stream, float value) {
+    FloatUnion u = { .f = value };
 
     for(unsigned char i = 0; i < 4; i++) {
-        pStream->buffer[pStream->position + i] = u.bytes[i];
+        stream->buffer[stream->position + i] = u.bytes[i];
     }
-    pStream->position += 4;
+    stream->position += 4;
 }
 
 /// @brief Writes a double into the buffer in the bytestream
 /// @param stream Bytestream to write value into
 /// @param value Value to be put written into the buffer
-void WriteDouble(ByteStream* pStream, double value) {
-    union {
-        unsigned char bytes[8];
-        double d;
-    } u;
-
-    u.d = value;
+void WriteDouble(ByteStream* stream, double value) {
+    DoubleUnion u = { .d = value };
 
     for(unsigned char i = 0; i < 8; i++) {
-        pStream->buffer[pStream->position + i] = u.bytes[i];
+        stream->buffer[stream->position + i] = u.bytes[i];
     }
-    pStream->position += 8;
+    stream->position += 8;
 }
 
 /// @brief Reads a byte from the buffer in the bytestream
 /// @param stream Bytestream to read the value from
-unsigned char ReadByte(ByteStream* pStream) {
-    pStream->position++;
-    return pStream->buffer[pStream->position - 1];
+unsigned char ReadByte(ByteStream* stream) {
+    stream->position++;
+    return stream->buffer[stream->position - 1];
 }
 
 /// @brief Reads a short from the buffer in the bytestream
 /// @param stream Bytestream to read the value from
-short ReadShort(ByteStream* pStream) {
+short ReadShort(ByteStream* stream) {
     int value = 0;
     for(unsigned char i = 0; i < 2; i++) {
-        value += pStream->buffer[pStream->position + i] >> (i * 8);
+        value += stream->buffer[stream->position + i] >> (i * 8);
     }
-    pStream->position += 2;
+    stream->position += 2;
     return (short)value;
 }
 
 /// @brief Reads an int from the buffer in the bytestream
 /// @param stream Bytestream to read the value from
-int ReadInt(ByteStream* pStream) {
+int ReadInt(ByteStream* stream) {
     int value = 0;
     for(unsigned char i = 0; i < 4; i++) {
-        value += pStream->buffer[pStream->position + i] >> (i * 8);
+        value += stream->buffer[stream->position + i] >> (i * 8);
     }
-    pStream->position += 4;
+    stream->position += 4;
     return value;
 }
 
 /// @brief Reads a long from the buffer in the bytestream
 /// @param stream Bytestream to read the value from
-long ReadLong(ByteStream* pStream) {
+long ReadLong(ByteStream* stream) {
     long value = 0;
     for(unsigned char i = 0; i < 8; i++) {
-        value += pStream->buffer[pStream->position + i] >> (i * 8);
+        value += stream->buffer[stream->position + i] >> (i * 8);
     }
-    pStream->position += 8;
+    stream->position += 8;
     return value;
 }
 
 /// @brief Reads a float from the buffer in the bytestream
 /// @param stream Bytestream to read the value from
-float ReadFloat(ByteStream* pStream) {
-    union {
-        unsigned char bytes[4];
-        float f;
-    } u;
+float ReadFloat(ByteStream* stream) {
+    FloatUnion u = { .bytes = {0} };
 
     for(unsigned char i = 0; i < 4; i++) {
-        u.bytes[i] = pStream->buffer[pStream->position + i];
+        u.bytes[i] = stream->buffer[stream->position + i];
     }
-    pStream->position += 4;
+    stream->position += 4;
 
     return u.f;
 }
 
 /// @brief Reads a double from the buffer in the bytestream
 /// @param stream Bytestream to read the value from
-double ReadDouble(ByteStream* pStream) {
-    union {
-        unsigned char bytes[8];
-        double d;
-    } u;
+double ReadDouble(ByteStream* stream) {
+    DoubleUnion u = { .bytes = {0} };
 
     for(unsigned char i = 0; i < 8; i++) {
-        u.bytes[i] = pStream->buffer[pStream->position + i];
+        u.bytes[i] = stream->buffer[stream->position + i];
     }
-    pStream->position += 8;
+    stream->position += 8;
 
     return u.d;
 }

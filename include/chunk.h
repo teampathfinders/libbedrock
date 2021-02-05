@@ -31,11 +31,11 @@ typedef struct Subchunk_T {
     Position* position;
 } Subchunk;
 
-Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension);
-void FreeSubchunk(World* pWorld, Subchunk* pSubchunk);
-void PrintSubchunk(Subchunk* pSubchunk);
+Result LoadSubchunk(World* world, Subchunk** subchunk, int x, unsigned char y, int z, Dimension dimension);
+void FreeSubchunk(World* world, Subchunk* subchunk);
+void PrintSubchunk(Subchunk* subchunk);
 
-NbtTag* GetBlockAtSubchunkPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z);
+NbtTag* GetBlockAtSubchunkPosition(Subchunk* subchunk, unsigned char x, unsigned char y, unsigned char z);
 NbtTag* GetBlockAtWorldPosition(World* world, Position* position);
 
 #endif // BEDROCKFORMAT_CHUNK_H

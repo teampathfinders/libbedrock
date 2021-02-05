@@ -12,7 +12,11 @@ add_library(
         include/chunk.h
         src/chunk.c
         include/binary.h
-        src/binary.c include/nbt.h src/nbt.c include/hashmap.h)
+        src/binary.c
+        include/nbt.h
+        src/nbt.c
+        include/hashmap.h
+)
 
 target_include_directories(
         bedrock_format PRIVATE
@@ -23,6 +27,10 @@ target_link_libraries(
         bedrock_format PRIVATE
         LevelDB-MCPE
 )
+
+if(MSVC)
+        target_compile_options(bedrock_format PRIVATE /W4 /WX /wd4505)
+endif()
 
 if(BEDROCK_FORMAT_ENABLE_TESTING)
         add_custom_command(

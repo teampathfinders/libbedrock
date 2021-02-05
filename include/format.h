@@ -45,11 +45,11 @@ typedef enum Dimension_T {
 extern "C" {
 #endif
 
-Result OpenWorld(const char *path, World** ppWorld);
-Result CloseWorld(World* pWorld);
+Result OpenWorld(const char *path, World** world);
+Result CloseWorld(World* world);
 
 Result LoadEntry(
-    World* pWorld, const unsigned char* key, unsigned int keyLen, unsigned char** ppBuffer, unsigned int* pBufferLen
+        World* world, const unsigned char* key, unsigned int keyLen, unsigned char** buffer, unsigned int* bufferLen
 );
 
 void ClearChunkCache(World* world);

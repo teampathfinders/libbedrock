@@ -21,10 +21,10 @@
 
 /// @brief Generates a key for a subchunk database entry
 /// @param Position Subchunk position
-/// @param pBufferLen Pointer to an unsigned integer containing the length of the returned buffer
+/// @param bufferLen Pointer to an unsigned integer containing the length of the returned buffer
 /// @returns The raw subchunk data
 /// @internal
-inline unsigned char* GenerateSubchunkKey(int x, unsigned char y, int z, Dimension dimension, unsigned int* pBufferLen) {
+inline unsigned char* GenerateSubchunkKey(int x, unsigned char y, int z, Dimension dimension, unsigned int* bufferLen) {
     unsigned int bufferSize = 4 + 4 + 1 + 1;
     if(dimension != OVERWORLD) bufferSize += 4;
 
@@ -34,14 +34,14 @@ inline unsigned char* GenerateSubchunkKey(int x, unsigned char y, int z, Dimensi
     }
 
     WriteInt(stream, x);
-    WriteInt(stream, y);
+    WriteInt(stream, z);
     if(dimension != OVERWORLD) WriteInt(stream, dimension);
 
     WriteByte(stream, 0x2f);
     WriteByte(stream, y);
 
     unsigned char* buffer = stream->buffer;
-    *pBufferLen = bufferSize;
+    *bufferLen = bufferSize;
 
     DestroyByteStream(stream, 0);
     return buffer;
@@ -52,18 +52,18 @@ inline unsigned char* GenerateSubchunkKey(int x, unsigned char y, int z, Dimensi
 /// @param position Position of the subchunk
 /// @returns Result
 /// @attention This function has to be called before you can use GetBlockAtWorldPosition or GetBlockAtSubchunkPosition
-Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension) {
+Result LoadSubchunk(World* world, Subchunk** subchunk, int x, unsigned char y, int z, Dimension dimension) {
     printf("Loading subchunk %i, %i, %i\n", x, y, z);
 
-    Subchunk* pSubchunk = malloc(sizeof(Subchunk));
-    if(pSubchunk == NULL) {
+    Subchunk* decoded = malloc(sizeof(Subchunk));
+    if(decoded == NULL) {
         fprintf(stderr, "Failed to allocate subchunk\n");
         return ALLOCATION_FAILED;
     }
 
     // Set position to NULL to make sure that whenever FreeSubchunk is called before the subchunk is added to the chunk
     // cache FreeSubchunk will still work
-    pSubchunk->position = NULL;
+    decoded->position = NULL;
 
     // Generate the database key that corresponds to the requested subchunk
     unsigned int keyLen;
@@ -75,7 +75,7 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
     // Load the subchunk from the database using the generated key
     unsigned int rawBufferLen;
     unsigned char* rawBuffer;
-    Result result = LoadEntry(pWorld, key, keyLen, &rawBuffer, &rawBufferLen);
+    Result result = LoadEntry(world, key, keyLen, &rawBuffer, &rawBufferLen);
     free(key);
 
     if(BF_FAILED(result)) {
@@ -89,19 +89,19 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
         return ALLOCATION_FAILED;
     }
 
-    pSubchunk->version = ReadByte(stream);
-    if(pSubchunk->version != 8 && pSubchunk->version != 1) {
+    decoded->version = ReadByte(stream);
+    if(decoded->version != 8 && decoded->version != 1) {
         // Invalid subchunk
         fprintf(
-            stderr, "Subchunk %i, %i, %i has version %i (should be either 1 or 8)\n",
-            x, y, z, pSubchunk->version
+                stderr, "Subchunk %i, %i, %i has version %i (should be either 1 or 8)\n",
+                x, y, z, decoded->version
         );
         DestroyByteStream(stream, 1);
-        free(pSubchunk);
+        free(decoded);
         return INVALID_DATA;
     }
 
-    if(pSubchunk->version == 8) {
+    if(decoded->version == 8) {
         stream->position++;
     }
 
@@ -120,32 +120,31 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
 
             for(unsigned int j = 0; j < blockCount && len < 4096; j++) {
                 unsigned int b = w & lowerOnes;
-                pSubchunk->blocks[len] = (unsigned short)b;
+                decoded->blocks[len] = (unsigned short)b;
                 len++;
 
                 w >>= bitsPerBlock;
             }
         }
 
-        unsigned int paletteSize = ReadInt(stream);
-        pSubchunk->paletteSize = paletteSize;
-        pSubchunk->palette = malloc(sizeof(NbtTag*) * paletteSize);
-        if(pSubchunk->palette == NULL) {
+        decoded->paletteSize = (unsigned short)ReadInt(stream);
+        decoded->palette = malloc(sizeof(NbtTag*) * decoded->paletteSize);
+        if(decoded->palette == NULL) {
             fprintf(stderr, "Failed to allocate 4096 block states\n");
             DestroyByteStream(stream, 1);
-            free(pSubchunk);
+            free(decoded);
             return ALLOCATION_FAILED;
         }
 
-        for(unsigned int j = 0; j < paletteSize; j++) {
+        for(unsigned int j = 0; j < decoded->paletteSize; j++) {
             stream->position += 3; // Skip tag type and name
 
             struct hashmap_s* compoundEntries = malloc(sizeof(struct hashmap_s));
             if(hashmap_create(2, compoundEntries) != 0) {
                 fprintf(stderr, "Failed to create hashmap\n");
                 DestroyByteStream(stream, 1);
-                free(pSubchunk->palette);
-                free(pSubchunk);
+                free(decoded->palette);
+                free(decoded);
                 return ALLOCATION_FAILED;
             }
 
@@ -154,8 +153,8 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
                 fprintf(stderr, "Failed to decode NTB entry\n");
                 hashmap_destroy(compoundEntries);
                 DestroyByteStream(stream, 1);
-                free(pSubchunk->palette);
-                free(pSubchunk);
+                free(decoded->palette);
+                free(decoded);
                 return DESERIALIZATION_FAILED;
             }
 
@@ -164,24 +163,24 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
                 fprintf(stderr, "Failed to decode NTB entry\n");
                 hashmap_destroy(compoundEntries);
                 DestroyByteStream(stream, 1);
-                free(pSubchunk->palette);
-                free(pSubchunk);
+                free(decoded->palette);
+                free(decoded);
                 return ALLOCATION_FAILED;
             }
 
             tag->type = NBT_COMPOUND;
             tag->payload = compoundEntries;
 
-            pSubchunk->palette[j] = tag;
+            decoded->palette[j] = tag;
         }
     }
 
-    *ppSubchunk = pSubchunk;
+    *subchunk = decoded;
 
     Position* subchunkPosition = malloc(sizeof(Position));
     if(subchunkPosition == NULL) {
         fprintf(stderr, "Failed to allocate subchunk position\n");
-        FreeSubchunk(NULL, pSubchunk);
+        FreeSubchunk(NULL, decoded);
         return ALLOCATION_FAILED;
     }
 
@@ -189,11 +188,11 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
     subchunkPosition->y = y;
     subchunkPosition->z = z;
     subchunkPosition->dimension = dimension;
-    pSubchunk->position = subchunkPosition;
+    decoded->position = subchunkPosition;
 
-    if(hashmap_put(&pWorld->chunkCache, (char*)subchunkPosition, sizeof(Position), pSubchunk) != 0) {
+    if(hashmap_put(&world->chunkCache, (char*)subchunkPosition, sizeof(Position), decoded) != 0) {
         fprintf(stderr, "Failed to insert subchunk into chunk cache\n");
-        FreeSubchunk(NULL, pSubchunk);
+        FreeSubchunk(NULL, decoded);
         return HASHMAP_INSERTION_FAILED;
     }
 
@@ -203,29 +202,31 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
     return SUCCESS;
 }
 
-/// @brief Frees the subchunk and internal palette entries from memory
-/// @param pWorld The world that contains the subchunk (pass NULL if this subchunk has not been inserted into a cache yet)
+/// @brief Frees the subchunk and internal palette entries from memory and removes it from the chunk cache
+/// @param world The world that contains the subchunk
 /// @param subchunk Subchunk to be freed
-void FreeSubchunk(World* pWorld, Subchunk* pSubchunk) {
-    if(pWorld != NULL) {
-        hashmap_remove(&pWorld->chunkCache, (char*)pSubchunk->position, sizeof(Position));
+/// @attention Pass NULL as the pWorld parameter to free this chunk without removing it from the cache
+///            (this feature is only really used internally, but it might be helpful)
+void FreeSubchunk(World* world, Subchunk* subchunk) {
+    if(world != NULL) {
+        hashmap_remove(&world->chunkCache, (char*)subchunk->position, sizeof(Position));
     }
 
-    for(unsigned short i = 0; i < pSubchunk->paletteSize; i++) {
-        FreeNbtTag(pSubchunk->palette[i]);
+    for(unsigned short i = 0; i < subchunk->paletteSize; i++) {
+        FreeNbtTag(subchunk->palette[i]);
     }
-    free(pSubchunk->position);
-    free(pSubchunk->palette);
-    free(pSubchunk);
+    free(subchunk->position);
+    free(subchunk->palette);
+    free(subchunk);
 }
 
 /// @brief Logs the subchunk information to the console
 /// @param subchunk Subchunk to be logged
-void PrintSubchunk(Subchunk* pSubchunk) {
-    printf("Subchunk version: %i\n", pSubchunk->version);
-    printf("Palette block count: %i\n", pSubchunk->paletteSize);
-    for(unsigned short i = 0; i < pSubchunk->paletteSize; i++) {
-        PrintNbtTag(pSubchunk->palette[i]);
+void PrintSubchunk(Subchunk* subchunk) {
+    printf("Subchunk version: %i\n", subchunk->version);
+    printf("Palette block count: %i\n", subchunk->paletteSize);
+    for(unsigned short i = 0; i < subchunk->paletteSize; i++) {
+        PrintNbtTag(subchunk->palette[i]);
     }
 }
 
@@ -235,25 +236,26 @@ void PrintSubchunk(Subchunk* pSubchunk) {
 /// @param y Y-coordinate of the block
 /// @param z Z-coordinate of the block
 /// @returns Pointer to an NBT tag
-NbtTag* GetBlockAtSubchunkPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z) {
-    return pSubchunk->palette[pSubchunk->blocks[16 * 16 * x + 16 * z + y]];
+NbtTag* GetBlockAtSubchunkPosition(Subchunk* subchunk, unsigned char x, unsigned char y, unsigned char z) {
+    return subchunk->palette[subchunk->blocks[16 * 16 * x + 16 * z + y]];
 }
 
 /// @brief Retrieves a block from a world
 /// @param world World containing the block
 /// @param position Position of the block
 /// @returns Pointer to an NBT tag
-/// @attention This function will automatically load the subchunk for you if it has not been loaded before
+/// @attention This function will automatically load the subchunk for you if it has not been loaded before.
+///            Otherwise it will be loaded from the chunk cache.
 /// @attention This function is very similar to GetBlockAtSubchunkPosition,
-///            but instead of loading a block from a subchunk it loads it from a world
+///            but instead of loading a block from a subchunk it loads it from a world.
 NbtTag* GetBlockAtWorldPosition(World* world, Position* position) {
     Subchunk* subchunk = hashmap_get(&world->chunkCache, (const char*)position, sizeof(Position));
     if(subchunk == NULL) {
         Result parseResult = LoadSubchunk(
             world, &subchunk,
-            floor((double)position->x / 16.0),
-            floor((double)position->y / 16.0),
-            floor((double)position->z / 16.0),
+            (int)floor((double)position->x / 16.0),
+            (unsigned char)floor((double)position->y / 16.0),
+            (int)floor((double)position->z / 16.0),
             position->dimension
         );
         if(BF_FAILED(parseResult)) {

@@ -40,9 +40,9 @@ static leveldb::Options options;
 /// @param path Path to the world
 /// @param world Double pointer to a world struct that will be populated with data
 /// @returns Result
-Result OpenWorld(const char* path, World** ppWorld) {
-    *ppWorld = new World();
-    World* pWorld = *ppWorld;
+Result OpenWorld(const char* path, World** world) {
+    *world = new World();
+    World* pWorld = *world;
 
     if(hashmap_create(1, &pWorld->chunkCache) != 0) {
         std::cerr << "Failed to create chunk cache hashmap" << std::endl;
@@ -76,15 +76,15 @@ Result OpenWorld(const char* path, World** ppWorld) {
 /// @brief Closes the LevelDB database and frees the world
 /// @param world World to be freed
 /// @returns Result
-Result CloseWorld(World* pWorld) {
-    ClearChunkCache(pWorld);
-    hashmap_destroy(&pWorld->chunkCache);
-    delete (leveldb::DB*)pWorld->db;
+Result CloseWorld(World* world) {
+    ClearChunkCache(world);
+    hashmap_destroy(&world->chunkCache);
+    delete (leveldb::DB*)world->db;
     delete options.filter_policy;
     delete options.block_cache;
     delete options.compressors[0];
     delete options.compressors[1];
-    delete pWorld;
+    delete world;
 
     return SUCCESS;
 }
@@ -98,13 +98,13 @@ Result CloseWorld(World* pWorld) {
 /// @returns Result
 /// @internal
 Result LoadEntry(
-    World* pWorld, const unsigned char* key, unsigned int keyLen, unsigned char** ppBuffer, unsigned int* pBufferLen
+    World* world, const unsigned char* key, unsigned int keyLen, unsigned char** buffer, unsigned int* bufferLen
 ) {
     leveldb::Slice slice = leveldb::Slice(reinterpret_cast<const char*>(key), keyLen);
     std::string cppValue;
 
     // Load from database
-    leveldb::Status status = ((leveldb::DB*)pWorld->db)->Get(readOptions, slice, &cppValue);
+    leveldb::Status status = ((leveldb::DB*)world->db)->Get(readOptions, slice, &cppValue);
     if(!status.ok()) {
         if(status.IsNotFound()) {
             return SUBCHUNK_NOT_FOUND;
@@ -113,11 +113,11 @@ Result LoadEntry(
     }
 
     // Copy the string content into a char array to be able to use it in C
-    *pBufferLen = cppValue.length();
-    auto buffer = new unsigned char[cppValue.length() + 1];
+    *bufferLen = cppValue.length();
+    auto tempBuffer = new unsigned char[cppValue.length() + 1];
 
-    memcpy(buffer, cppValue.c_str(), cppValue.length());
-    *ppBuffer = buffer;
+    memcpy(tempBuffer, cppValue.c_str(), cppValue.length());
+    *buffer = tempBuffer;
 
     return SUCCESS;
 }

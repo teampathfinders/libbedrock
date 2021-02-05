@@ -20,20 +20,20 @@ typedef struct ByteStream_T {
 
 ByteStream* CreateByteStream(unsigned int preAllocated);
 ByteStream* CreateFilledByteStream(unsigned char* data, unsigned int size);
-void DestroyByteStream(ByteStream* pStream, int freeBuffer);
+void DestroyByteStream(ByteStream* stream, int freeBuffer);
 
-void WriteByte(ByteStream* pStream, unsigned char value);
-void WriteShort(ByteStream* pStream, short value);
-void WriteInt(ByteStream* pStream, int value);
-void WriteLong(ByteStream* pStream, long value);
-void WriteFloat(ByteStream* pStream, float value);
-void WriteDouble(ByteStream* pStream, double value);
+void WriteByte(ByteStream* stream, unsigned char value);
+void WriteShort(ByteStream* stream, short value);
+void WriteInt(ByteStream* stream, int value);
+void WriteLong(ByteStream* stream, long value);
+void WriteFloat(ByteStream* stream, float value);
+void WriteDouble(ByteStream* stream, double value);
 
-unsigned char ReadByte(ByteStream* pStream);
-short ReadShort(ByteStream* pStream);
-int ReadInt(ByteStream* pStream);
-long ReadLong(ByteStream* pStream);
-float ReadFloat(ByteStream* pStream);
-double ReadDouble(ByteStream* pStream);
+unsigned char ReadByte(ByteStream* stream);
+short ReadShort(ByteStream* stream);
+int ReadInt(ByteStream* stream);
+long ReadLong(ByteStream* stream);
+float ReadFloat(ByteStream* stream);
+double ReadDouble(ByteStream* stream);
 
 #endif // BEDROCKFORMAT_BINARY_H

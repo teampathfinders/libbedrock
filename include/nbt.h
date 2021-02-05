@@ -39,8 +39,8 @@ typedef struct NbtTag_T {
 
 const char* TranslateNbtType(enum NbtTagType type);
 
-char* DecodeRawNbtString(ByteStream* pStream);
-int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent);
+char* DecodeRawNbtString(ByteStream* stream);
+int DecodeNbtTagWithParent(ByteStream* stream, struct hashmap_s* parent);
 
 void PrintNbtTagInner(enum NbtTagType type, void* payload, const char* name, int indentation);
 void PrintNbtTag(NbtTag* tag);
