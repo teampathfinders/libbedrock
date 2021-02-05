@@ -125,7 +125,7 @@ Result LoadEntry(
 /// @brief Runs for every hashmap entry and frees it
 /// @internal
 int ClearChunkCacheEntry(void* const context, struct hashmap_element_s* const e) {
-    UNUSED(context);
+    BF_UNUSED(context);
 
     FreeSubchunk((Subchunk*)e->data);
     return -1;

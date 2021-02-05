@@ -15,8 +15,8 @@
 
 #include "hashmap.h"
 
-#define PFB_FAILED(x) x != SUCCESS
-#define UNUSED(x) (void)x
+#define BF_FAILED(x) x != SUCCESS
+#define BF_UNUSED(x) (void)x
 
 typedef enum Result_T {
     SUCCESS,

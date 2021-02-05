@@ -72,7 +72,7 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
     Result result = LoadEntry(pWorld, key, keyLen, &rawBuffer, &rawBufferLen);
     free(key);
 
-    if(PFB_FAILED(result)) {
+    if(BF_FAILED(result)) {
         return result;
     }
 
@@ -204,7 +204,7 @@ void PrintSubchunk(Subchunk* pSubchunk) {
 /// @param y Y-coordinate of the block
 /// @param z Z-coordinate of the block
 /// @returns Pointer to an NBT tag
-NbtTag* GetBlockAtPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z) {
+NbtTag* GetBlockAtSubchunkPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z) {
     return pSubchunk->palette[pSubchunk->blocks[16 * 16 * x + 16 * z + y]];
 }
 

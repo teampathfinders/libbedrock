@@ -25,7 +25,7 @@ extern "C" {
 
 std::string GetSaveDirectory() {
 	TCHAR szPath[MAX_PATH];
-	if(PFB_FAILED(SHGetFolderPath(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, szPath))) {
+	if(BF_FAILED(SHGetFolderPath(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, szPath))) {
 		throw std::runtime_error("Failed to get AppData path");
 	}
 
@@ -48,7 +48,7 @@ int main() {
 
 	World* world;
 	Result result = OpenWorld(path.c_str(), &world);
-	if(PFB_FAILED(result)) {
+	if(BF_FAILED(result)) {
 	    return 1;
 	}
 
@@ -75,7 +75,7 @@ int main() {
 
     Subchunk* subchunk;
 	result = LoadSubchunk(world, &subchunk, 0, 0, 0, OVERWORLD);
-	if(PFB_FAILED(result)) {
+	if(BF_FAILED(result)) {
 	    fprintf(stderr, "LoadSubchunk failed with error: %s\n", TranslateErrorString(result));
 	    return 1;
 	}
@@ -85,7 +85,7 @@ int main() {
 	FreeSubchunk(subchunk);
 
 	result = CloseWorld(world);
-	if(PFB_FAILED(result)) {
+	if(BF_FAILED(result)) {
 	    return 1;
 	}
 	return 0;

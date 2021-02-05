@@ -33,7 +33,7 @@ Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y
 void FreeSubchunk(Subchunk* pSubchunk);
 void PrintSubchunk(Subchunk* pSubchunk);
 
-NbtTag* GetBlockAtPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z);
+NbtTag* GetBlockAtSubchunkPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z);
 NbtTag* GetBlockAtWorldPosition(World* world, Position* position);
 
 #endif //BEDROCKFORMAT_CHUNK_H
