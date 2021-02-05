@@ -25,11 +25,13 @@ typedef enum Result_T {
     DATABASE_OPEN_ERROR,
     DATABASE_READ_ERROR,
     INVALID_DATA,
-    DESERIALIZATION_FAILED
+    DESERIALIZATION_FAILED,
+    HASHMAP_INSERTION_FAILED
 } Result;
 
 typedef struct World_T {
     void* db;
+    void* leveldbCache;
     struct hashmap_s chunkCache;
 } World;
 
@@ -57,4 +59,4 @@ const char* TranslateErrorString(Result error);
 }
 #endif
 
-#endif //BEDROCK_FORMAT_FORMAT_HPP
+#endif // BEDROCK_FORMAT_FORMAT_HPP

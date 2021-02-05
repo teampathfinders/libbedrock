@@ -22,6 +22,7 @@ extern "C" {
 #include <filesystem>
 #include <stdexcept>
 #include <chrono>
+#include <thread>
 
 std::string GetSaveDirectory() {
 	TCHAR szPath[MAX_PATH];
@@ -52,7 +53,16 @@ int main() {
 	    return 1;
 	}
 
-//	int max_x = 150, max_y = 16, max_z = 150;
+	Position position = { 0, 6, 0, OVERWORLD };
+	NbtTag* block = GetBlockAtWorldPosition(world, &position);
+
+	if(block != NULL) {
+        PrintNbtTag(block);
+	} else {
+	    std::cout << "NULL" << std::endl;
+	}
+
+//	int max_x = 100, max_y = 16, max_z = 100;
 //
 //    auto t1 = std::chrono::high_resolution_clock::now();
 //	for(int x = 0; x < max_x; x++) {
@@ -63,8 +73,6 @@ int main() {
 //                if(FAILED(result)) {
 //                    return 1;
 //                }
-//
-//                FreeSubchunk(chunk);
 //	        }
 //	    }
 //	}
@@ -73,16 +81,15 @@ int main() {
 //
 //	std::cout << "Parsed a 16x16x16 subchunk in " << duration << " milliseconds" << std::endl;
 
-    Subchunk* subchunk;
-	result = LoadSubchunk(world, &subchunk, 0, 0, 0, OVERWORLD);
-	if(BF_FAILED(result)) {
-	    fprintf(stderr, "LoadSubchunk failed with error: %s\n", TranslateErrorString(result));
-	    return 1;
-	}
-
-	PrintSubchunk(subchunk);
+//    Subchunk* subchunk;
+//	result = LoadSubchunk(world, &subchunk, 0, 0, 0, OVERWORLD);
+//	if(BF_FAILED(result)) {
+//	    fprintf(stderr, "LoadSubchunk failed with error: %s\n", TranslateErrorString(result));
+//	    return 1;
+//	}
+//
+//	PrintSubchunk(subchunk);
 //	PrintNbtTag(GetBlockAtPosition(subchunk, 0, 0, 0));
-	FreeSubchunk(subchunk);
 
 	result = CloseWorld(world);
 	if(BF_FAILED(result)) {

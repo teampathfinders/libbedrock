@@ -16,24 +16,26 @@
 #include "format.h"
 #include "nbt.h"
 
+typedef struct Position_T {
+    int x;
+    unsigned char y;
+    int z;
+    Dimension dimension;
+} Position;
+
 typedef struct Subchunk_T {
     unsigned char version;
     unsigned short blocks[4096]; // 4096 blocks
     unsigned short paletteSize;
     NbtTag** palette;
+    Position* position;
 } Subchunk;
 
-typedef struct Position_T {
-    int x;
-    unsigned char y;
-    int z;
-} Position;
-
 Result LoadSubchunk(World* pWorld, Subchunk** ppSubchunk, int x, unsigned char y, int z, Dimension dimension);
-void FreeSubchunk(Subchunk* pSubchunk);
+void FreeSubchunk(World* pWorld, Subchunk* pSubchunk);
 void PrintSubchunk(Subchunk* pSubchunk);
 
 NbtTag* GetBlockAtSubchunkPosition(Subchunk* pSubchunk, unsigned char x, unsigned char y, unsigned char z);
 NbtTag* GetBlockAtWorldPosition(World* world, Position* position);
 
-#endif //BEDROCKFORMAT_CHUNK_H
+#endif // BEDROCKFORMAT_CHUNK_H

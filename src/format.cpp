@@ -34,23 +34,13 @@ extern "C" {
 #endif
 
 static leveldb::ReadOptions readOptions;
-
-/// @brief An empty logger that is used for the LevelDB database
-/// @internal
-class EmptyLogger : public leveldb::Logger {
-public:
-    void Logv(const char*, va_list) override {};
-};
+static leveldb::Options options;
 
 /// @brief Opens a new world
 /// @param path Path to the world
 /// @param world Double pointer to a world struct that will be populated with data
 /// @returns Result
 Result OpenWorld(const char* path, World** ppWorld) {
-    if(readOptions.decompress_allocator == nullptr) {
-        readOptions.decompress_allocator = new leveldb::DecompressAllocator();
-    }
-
     *ppWorld = new World();
     World* pWorld = *ppWorld;
 
@@ -60,13 +50,18 @@ Result OpenWorld(const char* path, World** ppWorld) {
     }
 
     // Configuration
-    leveldb::Options options;
-    options.filter_policy = leveldb::NewBloomFilterPolicy(10);
-    options.block_cache = leveldb::NewLRUCache(40 * 1024 * 1024);
-    options.write_buffer_size = 4 * 1024 * 1024;
-    options.info_log = new EmptyLogger();
-    options.compressors[0] = new leveldb::ZlibCompressorRaw(-1);
-    options.compressors[1] = new leveldb::ZlibCompressor();
+    if(options.filter_policy == nullptr) {
+        options.filter_policy = leveldb::NewBloomFilterPolicy(10);
+        options.block_cache = leveldb::NewLRUCache(40 * 1024 * 1024);
+        options.write_buffer_size = 4 * 1024 * 1024;
+        options.compressors[0] = new leveldb::ZlibCompressorRaw(-1);
+        options.compressors[1] = new leveldb::ZlibCompressor();
+    }
+    if(readOptions.decompress_allocator == nullptr) {
+        readOptions.decompress_allocator = new leveldb::DecompressAllocator();
+    }
+
+    pWorld->leveldbCache = options.block_cache;
 
     // Open database
     leveldb::Status status = leveldb::DB::Open(options, path, (leveldb::DB**)&pWorld->db);
@@ -82,8 +77,13 @@ Result OpenWorld(const char* path, World** ppWorld) {
 /// @param world World to be freed
 /// @returns Result
 Result CloseWorld(World* pWorld) {
+    ClearChunkCache(pWorld);
     hashmap_destroy(&pWorld->chunkCache);
     delete (leveldb::DB*)pWorld->db;
+    delete options.filter_policy;
+    delete options.block_cache;
+    delete options.compressors[0];
+    delete options.compressors[1];
     delete pWorld;
 
     return SUCCESS;
@@ -125,18 +125,17 @@ Result LoadEntry(
 /// @brief Runs for every hashmap entry and frees it
 /// @internal
 int ClearChunkCacheEntry(void* const context, struct hashmap_element_s* const e) {
-    BF_UNUSED(context);
-
-    FreeSubchunk((Subchunk*)e->data);
+    FreeSubchunk((World*)context, (Subchunk*)e->data);
     return -1;
 }
 
 /// @brief Clears the chunk cache and frees all the loaded subchunks from memory
 /// @param world World containing the chunk cache
 void ClearChunkCache(World* world) {
-    if(hashmap_iterate_pairs(&world->chunkCache, ClearChunkCacheEntry, nullptr)) {
+    if(hashmap_iterate_pairs(&world->chunkCache, ClearChunkCacheEntry, world)) {
         std::cerr << "Failed to free all subchunks in chunk cache" << std::endl;
     }
+    ((leveldb::Cache*)world->leveldbCache)->Prune();
 }
 
 /// @brief Converts a result to a readable string
@@ -158,6 +157,8 @@ const char* TranslateErrorString(Result error) {
             return "INVALID_DATA";
         case DESERIALIZATION_FAILED:
             return "DESERIALIZATION_FAILED";
+        case HASHMAP_INSERTION_FAILED:
+            return "HASHMAP_INSERTION_FAILED";
         default:
             return "UNKNOWN";
     }

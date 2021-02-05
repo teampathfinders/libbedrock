@@ -36,4 +36,4 @@ long ReadLong(ByteStream* pStream);
 float ReadFloat(ByteStream* pStream);
 double ReadDouble(ByteStream* pStream);
 
-#endif //BEDROCKFORMAT_BINARY_H
+#endif // BEDROCKFORMAT_BINARY_H

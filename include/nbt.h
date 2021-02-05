@@ -32,12 +32,12 @@ enum NbtTagType {
     NBT_LONG_ARRAY
 };
 
-const char* NbtTagTypeToString(enum NbtTagType type);
-
 typedef struct NbtTag_T {
     enum NbtTagType type;
     void* payload;
 } NbtTag;
+
+const char* TranslateNbtType(enum NbtTagType type);
 
 char* DecodeRawNbtString(ByteStream* pStream);
 int DecodeNbtTagWithParent(ByteStream* pStream, struct hashmap_s* parent);
@@ -46,4 +46,4 @@ void PrintNbtTagInner(enum NbtTagType type, void* payload, const char* name, int
 void PrintNbtTag(NbtTag* tag);
 void FreeNbtTag(NbtTag* tag);
 
-#endif //BEDROCKFORMAT_NBT_H
+#endif // BEDROCKFORMAT_NBT_H

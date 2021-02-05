@@ -190,7 +190,7 @@ void PrintNbtTagInner(enum NbtTagType type, void* const payload, const char* nam
         printf("\t");
     }
 
-    printf("%s(", NbtTagTypeToString(type));
+    printf("%s(", TranslateNbtType(type));
     if(strcmp(name, "") == 0) {
         printf("None");
     } else {
@@ -247,7 +247,7 @@ void PrintNbtTag(NbtTag* tag) {
     PrintNbtTagInner(tag->type, tag->payload, "", 0);
 }
 
-const char* NbtTagTypeToString(enum NbtTagType type) {
+const char* TranslateNbtType(enum NbtTagType type) {
     switch(type) {
         case NBT_BYTE:
             return "TAG_Byte";
