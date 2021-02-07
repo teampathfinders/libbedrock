@@ -7,15 +7,15 @@ set(BEDROCK_FORMAT_ENABLE_TESTING TRUE)
 add_subdirectory(libraries/leveldb)
 add_library(
         bedrock_format
-        include/format.h
+        include/BedrockFormat/format.h
         src/format.cpp
-        include/chunk.h
+        include/BedrockFormat/chunk.h
         src/chunk.c
-        include/binary.h
+        include/BedrockFormat/binary.h
         src/binary.c
-        include/nbt.h
+        include/BedrockFormat/nbt.h
         src/nbt.c
-        include/hashmap.h
+        include/BedrockFormat/hashmap.h
 )
 
 target_include_directories(
